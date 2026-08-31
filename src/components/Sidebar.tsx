@@ -33,7 +33,11 @@ import {
   BarChart3,
   AlertTriangle,
   X,
-  Sparkles
+  Sparkles,
+  Flame,
+  Scroll,
+  HeartHandshake,
+  Church
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -120,9 +124,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ]
     },
     {
+      group: 'Theology & Divinity Seminary',
+      items: [
+        { id: 'theology-programs', label: 'Theology Programs (Cert-B.Th)', icon: Flame },
+        { id: 'theology-students', label: 'Seminarians & Candidates', icon: GraduationCap },
+        { id: 'theology-practicum', label: 'Ministry Fieldwork Logs', icon: HeartHandshake },
+        { id: 'theology-library', label: 'Patristics & Divinity Library', icon: Scroll }
+      ]
+    },
+    {
       group: 'Campus Facilities',
       items: [
-        { id: 'college-library', label: 'Library Catalog', icon: Library },
+        { id: 'college-library', label: 'General Library Catalog', icon: Library },
         { id: 'college-hostel', label: 'Hostel & Housing', icon: BedDouble },
         { id: 'college-settings', label: 'Campus Settings', icon: Settings }
       ]

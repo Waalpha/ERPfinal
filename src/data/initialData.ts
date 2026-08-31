@@ -27,7 +27,12 @@ import {
   RetailCustomer,
   HospitalPatient,
   MedicalConsultation,
-  PharmacyItem
+  PharmacyItem,
+  TheologyProgram,
+  TheologyUnit,
+  TheologyStudent,
+  MinistryPracticumLog,
+  TheologyLibraryResource
 } from '../types';
 
 export const INITIAL_TENANTS: Tenant[] = [
@@ -72,6 +77,45 @@ export const INITIAL_TENANTS: Tenant[] = [
       staffCount: 38,
       totalFeeCollected: 8450000,
       totalFeeBalance: 1240000
+    }
+  },
+  {
+    id: 'tenant-berea-theology',
+    name: "St. Paul's Theological College & Divinity Seminary",
+    code: 'SPT-THEO',
+    subdomain: 'stpaulstheo',
+    customDomain: 'portal.stpaulstheo.ac.ke',
+    dnsStatus: 'CONFIGURED',
+    type: 'COLLEGE',
+    status: 'ACTIVE',
+    createdAt: '2024-02-20T08:30:00.000Z',
+    plan: 'ENTERPRISE',
+    modules: [
+      'STUDENTS',
+      'THEOLOGY',
+      'COURSES',
+      'DEPARTMENTS',
+      'FEES_FINANCE',
+      'LIBRARY',
+      'HOSTEL',
+      'STAFF',
+      'REPORTS',
+      'SMS_NOTIFICATIONS'
+    ],
+    logoUrl: 'https://images.unsplash.com/photo-1548625361-195feee10fce?w=160&auto=format&fit=crop&q=80',
+    motto: 'Equipping Faithful Servants of Christ in Truth, Grace & Ministry Competence',
+    contactEmail: 'admissions@stpaulstheo.ac.ke',
+    phone: '+254 720 123 789',
+    address: 'Seminary Hill, Limuru Road, Kiambu / Nairobi, Kenya',
+    country: 'Kenya',
+    currency: 'KES',
+    currentTerm: 'TERM_1',
+    currentAcademicYear: '2025',
+    stats: {
+      studentCount: 340,
+      staffCount: 28,
+      totalFeeCollected: 11800000,
+      totalFeeBalance: 1850000
     }
   },
   {
@@ -188,6 +232,28 @@ export const INITIAL_TENANTS: Tenant[] = [
 ];
 
 export const INITIAL_USERS: AppUser[] = [
+  {
+    uid: 'user-theology-dean',
+    email: 'dean.mutua@stpaulstheo.ac.ke',
+    displayName: 'Rev. Dr. Samuel Mutua, Th.D (Dean of Theology)',
+    tenantId: 'tenant-berea-theology',
+    tenantName: "St. Paul's Theological Seminary",
+    role: 'TENANT_ADMIN',
+    isActive: true,
+    phone: '+254 720 123 701',
+    photoURL: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80'
+  },
+  {
+    uid: 'user-theology-registrar',
+    email: 'registrar@stpaulstheo.ac.ke',
+    displayName: 'Pastor Deborah Chebet (Academic Registrar)',
+    tenantId: 'tenant-berea-theology',
+    tenantName: "St. Paul's Theological Seminary",
+    role: 'MANAGER',
+    isActive: true,
+    phone: '+254 720 123 702',
+    photoURL: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&auto=format&fit=crop&q=80'
+  },
   {
     uid: 'user-superadmin-01',
     email: 'superadmin@davetech.io',
@@ -1674,6 +1740,676 @@ export const INITIAL_PHARMACY_ITEMS: Record<string, PharmacyItem[]> = {
       unitPrice: 500,
       expiryDate: '2026-08-31',
       status: 'LOW_STOCK'
+    }
+  ]
+};
+
+// ==========================================
+// THEOLOGY & DIVINITY FACULTY DATA
+// Spectrum: Certificate, Diploma, Higher Diploma, Bachelor of Theology (B.Th)
+// ==========================================
+export const INITIAL_THEOLOGY_PROGRAMS: Record<string, TheologyProgram[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'theo-prog-01',
+      tenantId: 'tenant-berea-theology',
+      code: 'CERT-BIB-101',
+      title: 'Certificate in Biblical Studies & Christian Discipleship',
+      level: 'CERTIFICATE',
+      departmentId: 'dept-theo-biblical',
+      departmentName: 'Department of Biblical Studies & Hermeneutics',
+      durationSemesters: 2,
+      durationYears: '1 Year (2 Semesters)',
+      tuitionPerSemester: 28000,
+      enrolledStudentsCount: 65,
+      ministryTrack: 'CHRISTIAN_EDUCATION',
+      totalCreditHours: 32,
+      requiredPracticumHours: 40,
+      description: 'Foundational 1-year training in Old & New Testament survey, spiritual disciplines, basic evangelism, and Christian service for lay ministers and church elders.',
+      targetCallings: ['Lay Leaders', 'Sunday School Teachers', 'Evangelism Teams', 'Cell Group Leaders'],
+      curriculumUnits: [
+        {
+          id: 'u-c01',
+          unitCode: 'BIB101',
+          unitTitle: 'Old Testament Survey & Covenant History',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 1,
+          category: 'Old Testament',
+          coreRequired: true,
+          description: 'Overview of the Pentateuch, historical books, poetry, and prophets with focus on redemptive history.'
+        },
+        {
+          id: 'u-c02',
+          unitCode: 'BIB102',
+          unitTitle: 'New Testament Survey & Gospels Harmony',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 1,
+          category: 'New Testament',
+          coreRequired: true,
+          description: 'Survey of the Gospels, Acts, Epistles, and Revelation with practical application for Christian life.'
+        },
+        {
+          id: 'u-c03',
+          unitCode: 'MIN101',
+          unitTitle: 'Christian Discipleship & Spiritual Disciplines',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 1,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Prayer, Scripture meditation, fasting, stewardship, and cultivating personal intimacy with God.'
+        },
+        {
+          id: 'u-c04',
+          unitCode: 'HER101',
+          unitTitle: 'Basic Biblical Hermeneutics & Study Methods',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 1,
+          category: 'Biblical Languages',
+          coreRequired: true,
+          description: 'Inductive Bible study, literal-grammatical-historical context, and applying Scripture accurately.'
+        },
+        {
+          id: 'u-c05',
+          unitCode: 'ETH101',
+          unitTitle: 'Christian Ethics & Ministry Integrity',
+          creditHours: 2,
+          level: 'CERTIFICATE',
+          semester: 2,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Moral foundations, integrity in leadership, marital faithfulness, and financial accountability in ministry.'
+        },
+        {
+          id: 'u-c06',
+          unitCode: 'EVN101',
+          unitTitle: 'Personal Evangelism & Church Outreach',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 2,
+          category: 'Missiology & Apologetics',
+          coreRequired: true,
+          description: 'Gospel presentation strategies, follow-up discipleship, cross-cultural sensitivity, and church planting support.'
+        },
+        {
+          id: 'u-c07',
+          unitCode: 'PAS101',
+          unitTitle: 'Introduction to Pastoral Visitation & Fellowship Care',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 2,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Home visitation, hospital encouragement, prayer support, and conflict resolution basics in local fellowships.'
+        }
+      ]
+    },
+    {
+      id: 'theo-prog-02',
+      tenantId: 'tenant-berea-theology',
+      code: 'DIP-THEO-201',
+      title: 'Diploma in Theology & Pastoral Leadership',
+      level: 'DIPLOMA',
+      departmentId: 'dept-theo-pastoral',
+      departmentName: 'Department of Pastoral Ministry & Systematic Theology',
+      durationSemesters: 4,
+      durationYears: '2 Years (4 Semesters)',
+      tuitionPerSemester: 42000,
+      enrolledStudentsCount: 110,
+      ministryTrack: 'PASTORAL_MINISTRY',
+      totalCreditHours: 64,
+      requiredPracticumHours: 80,
+      description: 'Comprehensive 2-year pastoral training preparing ministers for pulpit ministry, church administration, systematic doctrine, and community pastoral care.',
+      targetCallings: ['Associate Pastors', 'Parish Evangelists', 'Youth Pastors', 'Church Planters', 'Chaplains'],
+      curriculumUnits: [
+        {
+          id: 'u-d01',
+          unitCode: 'BIB201',
+          unitTitle: 'Pentateuch & Historical Books Exegesis',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 1,
+          category: 'Old Testament',
+          coreRequired: true,
+          description: 'Detailed theological study of Genesis to Deuteronomy, Joshua to Esther with covenantal themes.'
+        },
+        {
+          id: 'u-d02',
+          unitCode: 'SYS201',
+          unitTitle: 'Systematic Theology I: God, Revelation & Humanity',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 1,
+          category: 'Systematic Theology',
+          coreRequired: true,
+          description: 'Theology Proper, Trinity, Attributes of God, Creation, Fall, and the Image of God.'
+        },
+        {
+          id: 'u-d03',
+          unitCode: 'GRK201',
+          unitTitle: 'Elementary Biblical Greek I (Grammar & Nouns)',
+          creditHours: 4,
+          level: 'DIPLOMA',
+          semester: 1,
+          category: 'Biblical Languages',
+          coreRequired: true,
+          description: 'Koine Greek alphabet, vocabulary, first and second declension nouns, adjectives, and basic parsing.'
+        },
+        {
+          id: 'u-d04',
+          unitCode: 'HOM201',
+          unitTitle: 'Homiletics I: Expository Preaching & Message Prep',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 2,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Crafting biblically grounded sermon outlines, hermeneutical transition, illustrations, and passionate delivery.'
+        },
+        {
+          id: 'u-d05',
+          unitCode: 'SYS202',
+          unitTitle: 'Systematic Theology II: Christology & Soteriology',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 2,
+          category: 'Systematic Theology',
+          coreRequired: true,
+          description: 'Person and work of Jesus Christ, the Atonement, Resurrection, Justification, and Sanctification.'
+        },
+        {
+          id: 'u-d06',
+          unitCode: 'PAS201',
+          unitTitle: 'Pastoral Care & Church Administration',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 3,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Presiding over sacraments (Baptism, Lord’s Supper), weddings, funerals, constitution drafting, and budget management.'
+        },
+        {
+          id: 'u-d07',
+          unitCode: 'HIS201',
+          unitTitle: 'Church History: Early Fathers to Reformation',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 3,
+          category: 'Church History',
+          coreRequired: true,
+          description: 'Apostolic era, ecumenical councils, medieval monasticism, the Protestant Reformation (Luther, Calvin, Zwingli).'
+        },
+        {
+          id: 'u-d08',
+          unitCode: 'COU201',
+          unitTitle: 'Introduction to Biblical Counseling & Marriage Care',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 4,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Pre-marital counseling, grief counseling, addiction support, and family restoration through biblical principles.'
+        }
+      ]
+    },
+    {
+      id: 'theo-prog-03',
+      tenantId: 'tenant-berea-theology',
+      code: 'HDIP-MIN-301',
+      title: 'Higher Diploma in Practical Ministry & Mission Leadership',
+      level: 'HIGHER_DIPLOMA',
+      departmentId: 'dept-theo-missions',
+      departmentName: 'Department of Missiology, Apologetics & Leadership',
+      durationSemesters: 6,
+      durationYears: '3 Years (6 Semesters)',
+      tuitionPerSemester: 52000,
+      enrolledStudentsCount: 58,
+      ministryTrack: 'MISSIOLOGY_EVANGELISM',
+      totalCreditHours: 96,
+      requiredPracticumHours: 120,
+      description: 'Advanced 3-year ministerial qualification equipping senior pastors, missionaries, and institutional chaplains with deep exegetical depth and cross-cultural missional competencies.',
+      targetCallings: ['Senior Pastors', 'Overseas Missionaries', 'Denominational Directors', 'Hospital/Military Chaplains', 'NGO Spiritual Directors'],
+      curriculumUnits: [
+        {
+          id: 'u-h01',
+          unitCode: 'MIS301',
+          unitTitle: 'Foundations of Missiology & Cultural Anthropology',
+          creditHours: 3,
+          level: 'HIGHER_DIPLOMA',
+          semester: 1,
+          category: 'Missiology & Apologetics',
+          coreRequired: true,
+          description: 'Theology of Mission (Missio Dei), contextualization, redemptive analogies, and cross-cultural communication.'
+        },
+        {
+          id: 'u-h02',
+          unitCode: 'HEB301',
+          unitTitle: 'Elementary Biblical Hebrew I (Alphabet & Verbs)',
+          creditHours: 4,
+          level: 'HIGHER_DIPLOMA',
+          semester: 1,
+          category: 'Biblical Languages',
+          coreRequired: true,
+          description: 'Hebrew alphabet, vowel pointings, Qal strong verb paradigm, noun constructs, and translating Genesis passages.'
+        },
+        {
+          id: 'u-h03',
+          unitCode: 'SYS301',
+          unitTitle: 'Systematic Theology III: Ecclesiology & Eschatology',
+          creditHours: 3,
+          level: 'HIGHER_DIPLOMA',
+          semester: 2,
+          category: 'Systematic Theology',
+          coreRequired: true,
+          description: 'Nature and mission of the Church, spiritual gifts, biblical views of end times, return of Christ, and the New Creation.'
+        },
+        {
+          id: 'u-h04',
+          unitCode: 'HIS301',
+          unitTitle: 'History of Christianity in Africa & East African Revival',
+          creditHours: 3,
+          level: 'HIGHER_DIPLOMA',
+          semester: 3,
+          category: 'Church History',
+          coreRequired: true,
+          description: 'African church history from Alexandria/Carthage to 19th-century missionary movements and the 1930s East African Balokole Revival.'
+        },
+        {
+          id: 'u-h05',
+          unitCode: 'APO301',
+          unitTitle: 'Christian Apologetics & Contemporary African Issues',
+          creditHours: 3,
+          level: 'HIGHER_DIPLOMA',
+          semester: 4,
+          category: 'Missiology & Apologetics',
+          coreRequired: true,
+          description: 'Defending biblical truth against secularism, syncretism, prosperity cults, and engaging dialogue with Islam and traditional religions.'
+        },
+        {
+          id: 'u-h06',
+          unitCode: 'CHA301',
+          unitTitle: 'Institutional Chaplaincy (Hospitals, Armed Forces & Prisons)',
+          creditHours: 3,
+          level: 'HIGHER_DIPLOMA',
+          semester: 5,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Specialized pastoral care in clinical trauma, end-of-life palliative accompaniment, and rehabilitation ministry.'
+        }
+      ]
+    },
+    {
+      id: 'theo-prog-04',
+      tenantId: 'tenant-berea-theology',
+      code: 'BTH-401',
+      title: 'Bachelor of Theology (B.Th) / BA in Theological & Biblical Studies',
+      level: 'BACHELORS',
+      departmentId: 'dept-theo-biblical',
+      departmentName: 'Department of Biblical Studies & Systematic Theology',
+      durationSemesters: 8,
+      durationYears: '4 Years (8 Semesters)',
+      tuitionPerSemester: 68000,
+      enrolledStudentsCount: 107,
+      ministryTrack: 'PASTORAL_MINISTRY',
+      totalCreditHours: 128,
+      requiredPracticumHours: 200,
+      description: 'The premier 4-year undergraduate theological degree. Combines rigorous original-language exegesis (Greek & Hebrew), systematic theology, historical theology, and a 200-hour ordination practicum.',
+      targetCallings: ['Ordained Ministers', 'Theological Lecturers', 'Seminary Educators', 'Denominational Executives', 'Bible Translators', 'Senior Church Planters'],
+      curriculumUnits: [
+        {
+          id: 'u-b01',
+          unitCode: 'BTH401',
+          unitTitle: 'Advanced Greek Syntax & Exegesis of Romans',
+          creditHours: 4,
+          level: 'BACHELORS',
+          semester: 3,
+          category: 'Biblical Languages',
+          coreRequired: true,
+          description: 'Translating and exegeting Romans 1-8 in Koine Greek with syntactic diagramming and textual criticism.'
+        },
+        {
+          id: 'u-b02',
+          unitCode: 'BTH402',
+          unitTitle: 'Hebrew Exegesis of Isaiah & Wisdom Literature',
+          creditHours: 4,
+          level: 'BACHELORS',
+          semester: 4,
+          category: 'Biblical Languages',
+          coreRequired: true,
+          description: 'Reading Masoretic Text of Isaiah 40-55 and Job with syntactic discourse analysis.'
+        },
+        {
+          id: 'u-b03',
+          unitCode: 'BTH403',
+          unitTitle: 'Systematic Theology IV: Theological Method & Modern Debates',
+          creditHours: 3,
+          level: 'BACHELORS',
+          semester: 5,
+          category: 'Systematic Theology',
+          coreRequired: true,
+          description: 'In-depth evaluation of Reformed, Arminian, Pentecostal, and Liberation theological frameworks.'
+        },
+        {
+          id: 'u-b04',
+          unitCode: 'BTH404',
+          unitTitle: 'African Christian Theology & Contextual Hermeneutics',
+          creditHours: 3,
+          level: 'BACHELORS',
+          semester: 6,
+          category: 'Systematic Theology',
+          coreRequired: true,
+          description: 'Study of leading African theologians (John Mbiti, Kwame Bediako, Mercy Oduyoye) and indigenous theological reflection.'
+        },
+        {
+          id: 'u-b05',
+          unitCode: 'BTH405',
+          unitTitle: 'Advanced Pastoral Psychotherapy, Trauma & Crisis Care',
+          creditHours: 3,
+          level: 'BACHELORS',
+          semester: 6,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Clinical pastoral education (CPE) methods, suicide intervention, post-traumatic counseling, and family systems.'
+        },
+        {
+          id: 'u-b06',
+          unitCode: 'BTH406',
+          unitTitle: 'Christian Bioethics, Public Policy & Social Justice',
+          creditHours: 3,
+          level: 'BACHELORS',
+          semester: 7,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Theological assessment of reproductive technologies, euthanasia, good governance, corruption, and climate stewardship.'
+        },
+        {
+          id: 'u-b07',
+          unitCode: 'BTH410',
+          unitTitle: 'Senior Bachelor’s Research Dissertation & Colloquium',
+          creditHours: 6,
+          level: 'BACHELORS',
+          semester: 8,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: '10,000-word peer-reviewed theological research thesis defended before the seminary academic faculty board.'
+        },
+        {
+          id: 'u-b08',
+          unitCode: 'BTH411',
+          unitTitle: 'Cap-Stone Ministerial Ordination Internship (200 Hours)',
+          creditHours: 4,
+          level: 'BACHELORS',
+          semester: 8,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Supervised full-term residency in a recognized parish covering preaching, counseling, elder board governance, and community missions.'
+        }
+      ]
+    }
+  ]
+};
+
+export const INITIAL_THEOLOGY_STUDENTS: Record<string, TheologyStudent[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'tstud-01',
+      tenantId: 'tenant-berea-theology',
+      regNo: 'SPT/BTH/2022/0045',
+      fullName: 'Gideon Kiprono Cheruiyot',
+      email: 'gideon.cheruiyot@students.stpaulstheo.ac.ke',
+      phone: '+254 711 556 778',
+      gender: 'Male',
+      programId: 'theo-prog-04',
+      programCode: 'BTH-401',
+      programTitle: 'Bachelor of Theology (B.Th)',
+      level: 'BACHELORS',
+      ministryTrack: 'PASTORAL_MINISTRY',
+      yearOfStudy: 3,
+      semester: 1,
+      homeChurchDenomination: 'Africa Inland Church (AIC Kenya)',
+      presbyteryOrDiocese: 'AIC Nairobi Area Regional Church Council',
+      mentorPastorName: 'Bishop Rev. Silas Yego',
+      mentorPastorPhone: '+254 722 999 111',
+      fieldWorkPlacement: 'AIC Plainsview Church, South B Nairobi',
+      practicumHoursCompleted: 145,
+      requiredPracticumHours: 200,
+      sermonsEvaluatedCount: 12,
+      status: 'ACTIVE',
+      academicGPA: 3.82,
+      feeBalance: 0,
+      totalBilled: 408000,
+      totalPaid: 408000,
+      scholarshipOrSponsor: 'AIC National Mission Theological Bursary',
+      admissionDate: '2022-09-05',
+      notes: 'Outstanding Greek & Exegesis proficiency. Recommending for pastoral ordination candidate stream.'
+    },
+    {
+      id: 'tstud-02',
+      tenantId: 'tenant-berea-theology',
+      regNo: 'SPT/DIP/2023/0112',
+      fullName: 'Hannah Wairimu Karangi',
+      email: 'hannah.karangi@students.stpaulstheo.ac.ke',
+      phone: '+254 723 445 667',
+      gender: 'Female',
+      programId: 'theo-prog-02',
+      programCode: 'DIP-THEO-201',
+      programTitle: 'Diploma in Theology & Pastoral Leadership',
+      level: 'DIPLOMA',
+      ministryTrack: 'CHRISTIAN_EDUCATION',
+      yearOfStudy: 2,
+      semester: 2,
+      homeChurchDenomination: 'Presbyterian Church of East Africa (PCEA)',
+      presbyteryOrDiocese: 'PCEA Milimani Presbytery',
+      mentorPastorName: 'Rev. Patrick Gitau',
+      mentorPastorPhone: '+254 721 888 222',
+      fieldWorkPlacement: 'PCEA St. Andrews Church, State House Road',
+      practicumHoursCompleted: 78,
+      requiredPracticumHours: 80,
+      sermonsEvaluatedCount: 8,
+      status: 'ACTIVE',
+      academicGPA: 3.65,
+      feeBalance: 12000,
+      totalBilled: 168000,
+      totalPaid: 156000,
+      scholarshipOrSponsor: 'PCEA Woman’s Guild Ministerial Scholarship',
+      admissionDate: '2023-09-04',
+      notes: 'Leading youth mentorship and Sunday school teacher training programs with distinction.'
+    },
+    {
+      id: 'tstud-03',
+      tenantId: 'tenant-berea-theology',
+      regNo: 'SPT/CERT/2024/0088',
+      fullName: 'Emanuel Omondi Otieno',
+      email: 'emanuel.otieno@students.stpaulstheo.ac.ke',
+      phone: '+254 734 667 889',
+      gender: 'Male',
+      programId: 'theo-prog-01',
+      programCode: 'CERT-BIB-101',
+      programTitle: 'Certificate in Biblical Studies & Discipleship',
+      level: 'CERTIFICATE',
+      ministryTrack: 'MISSIOLOGY_EVANGELISM',
+      yearOfStudy: 1,
+      semester: 2,
+      homeChurchDenomination: 'CITAM (Christ Is The Answer Ministries)',
+      presbyteryOrDiocese: 'CITAM Valley Road Assembly',
+      mentorPastorName: 'Pastor Justus Mugambi',
+      mentorPastorPhone: '+254 733 444 333',
+      fieldWorkPlacement: 'CITAM Outreach Center, Kibera Mission Point',
+      practicumHoursCompleted: 35,
+      requiredPracticumHours: 40,
+      sermonsEvaluatedCount: 4,
+      status: 'ACTIVE',
+      academicGPA: 3.5,
+      feeBalance: 0,
+      totalBilled: 56000,
+      totalPaid: 56000,
+      admissionDate: '2024-01-15'
+    },
+    {
+      id: 'tstud-04',
+      tenantId: 'tenant-berea-theology',
+      regNo: 'SPT/HDIP/2022/0019',
+      fullName: 'Rev. Barnabas Lokidor Ekitela',
+      email: 'barnabas.ekitela@students.stpaulstheo.ac.ke',
+      phone: '+254 718 223 991',
+      gender: 'Male',
+      programId: 'theo-prog-03',
+      programCode: 'HDIP-MIN-301',
+      programTitle: 'Higher Diploma in Practical Ministry & Missions',
+      level: 'HIGHER_DIPLOMA',
+      ministryTrack: 'MISSIOLOGY_EVANGELISM',
+      yearOfStudy: 3,
+      semester: 1,
+      homeChurchDenomination: 'Anglican Church of Kenya (ACK)',
+      presbyteryOrDiocese: 'ACK Diocese of Lodwar & Turkana Mission',
+      mentorPastorName: 'Rt. Rev. Bishop Joshua Losuru',
+      mentorPastorPhone: '+254 722 110 990',
+      fieldWorkPlacement: 'Turkana Frontier Church Planting Network',
+      practicumHoursCompleted: 115,
+      requiredPracticumHours: 120,
+      sermonsEvaluatedCount: 14,
+      status: 'PRACTICUM_FIELD',
+      academicGPA: 3.78,
+      feeBalance: 18000,
+      totalBilled: 312000,
+      totalPaid: 294000,
+      scholarshipOrSponsor: 'Cross-Cultural Frontier Missions Grant',
+      admissionDate: '2022-09-05',
+      notes: 'Pioneered 3 church plants along Northern Kenya corridor.'
+    }
+  ]
+};
+
+export const INITIAL_THEOLOGY_PRACTICUM_LOGS: Record<string, MinistryPracticumLog[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'prac-01',
+      tenantId: 'tenant-berea-theology',
+      studentId: 'tstud-01',
+      studentName: 'Gideon Kiprono Cheruiyot',
+      studentRegNo: 'SPT/BTH/2022/0045',
+      programTitle: 'Bachelor of Theology (B.Th)',
+      churchOrInstitution: 'AIC Plainsview Church, Nairobi',
+      supervisorPastor: 'Bishop Rev. Silas Yego',
+      ministryType: 'SUNDAY_SERMON',
+      hoursLogged: 4,
+      date: '2025-02-23',
+      scriptureTextOrTopic: 'Exposition of Romans 8:28-39 (More Than Conquerors)',
+      supervisorFeedback: 'Exceptional homiletical structure and deep Christ-centered theology. Kept congregation engaged with sound application.',
+      ratingScore: 94,
+      status: 'VERIFIED'
+    },
+    {
+      id: 'prac-02',
+      tenantId: 'tenant-berea-theology',
+      studentId: 'tstud-02',
+      studentName: 'Hannah Wairimu Karangi',
+      studentRegNo: 'SPT/DIP/2023/0112',
+      programTitle: 'Diploma in Theology & Pastoral Leadership',
+      churchOrInstitution: 'PCEA St. Andrews Church, Nairobi',
+      supervisorPastor: 'Rev. Patrick Gitau',
+      ministryType: 'YOUTH_BIBLE_STUDY',
+      hoursLogged: 6,
+      date: '2025-02-20',
+      scriptureTextOrTopic: 'Biblical Worldview vs Postmodern Culture (Colossians 2:6-10)',
+      supervisorFeedback: 'Handled difficult theological questions from college youth with biblical clarity, humility and grace.',
+      ratingScore: 90,
+      status: 'VERIFIED'
+    },
+    {
+      id: 'prac-03',
+      tenantId: 'tenant-berea-theology',
+      studentId: 'tstud-04',
+      studentName: 'Rev. Barnabas Lokidor Ekitela',
+      studentRegNo: 'SPT/HDIP/2022/0019',
+      programTitle: 'Higher Diploma in Practical Ministry & Missions',
+      churchOrInstitution: 'Turkana Mission Parish, Lodwar',
+      supervisorPastor: 'Rt. Rev. Bishop Joshua Losuru',
+      ministryType: 'EVANGELISM_OUTREACH',
+      hoursLogged: 12,
+      date: '2025-02-15',
+      scriptureTextOrTopic: 'Open Air Gospel Rally & Discipleship Class',
+      supervisorFeedback: 'Mobilized over 140 community members, 22 made commitments of faith. Follow-up discipleship scheduled.',
+      ratingScore: 98,
+      status: 'VERIFIED'
+    }
+  ]
+};
+
+export const INITIAL_THEOLOGY_LIBRARY: Record<string, TheologyLibraryResource[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'theo-lib-01',
+      tenantId: 'tenant-berea-theology',
+      isbn: '978-0310286707',
+      title: 'Systematic Theology: An Introduction to Biblical Doctrine (2nd Edition)',
+      author: 'Wayne Grudem, Ph.D.',
+      category: 'SYSTEMATIC_THEOLOGY',
+      levelFocus: 'ALL_LEVELS',
+      totalCopies: 16,
+      availableCopies: 11,
+      shelfLocation: 'Aisle T-1 (Systematic Theology)',
+      digitalPdfAvailable: true,
+      status: 'AVAILABLE'
+    },
+    {
+      id: 'theo-lib-02',
+      tenantId: 'tenant-berea-theology',
+      isbn: '978-0801021411',
+      title: 'Basics of Biblical Greek Grammar & Syntax',
+      author: 'William D. Mounce',
+      category: 'BIBLICAL_LANGUAGES',
+      levelFocus: 'BACHELORS',
+      totalCopies: 20,
+      availableCopies: 14,
+      shelfLocation: 'Aisle L-2 (Greek & Hebrew)',
+      digitalPdfAvailable: true,
+      status: 'AVAILABLE'
+    },
+    {
+      id: 'theo-lib-03',
+      tenantId: 'tenant-berea-theology',
+      isbn: '978-0801035821',
+      title: 'Christ-Centered Preaching: Redeeming the Expository Sermon',
+      author: 'Bryan Chapell, Ph.D.',
+      category: 'HOMILETICS_PREACHING',
+      levelFocus: 'DIPLOMA',
+      totalCopies: 12,
+      availableCopies: 7,
+      shelfLocation: 'Aisle P-3 (Homiletics & Ministry)',
+      digitalPdfAvailable: false,
+      status: 'AVAILABLE'
+    },
+    {
+      id: 'theo-lib-04',
+      tenantId: 'tenant-berea-theology',
+      isbn: '978-9966805128',
+      title: 'African Religions and Philosophy & Christian Context',
+      author: 'Prof. John S. Mbiti',
+      category: 'CHURCH_HISTORY',
+      levelFocus: 'BACHELORS',
+      totalCopies: 15,
+      availableCopies: 9,
+      shelfLocation: 'Aisle AF-1 (African Christianity)',
+      digitalPdfAvailable: true,
+      status: 'AVAILABLE'
+    },
+    {
+      id: 'theo-lib-05',
+      tenantId: 'tenant-berea-theology',
+      isbn: '978-0801019623',
+      title: 'The Moody Bible Commentary: Complete OT & NT Exegesis',
+      author: 'Michael Rydelnik & Michael Vanlaningham',
+      category: 'COMMENTARY',
+      levelFocus: 'CERTIFICATE',
+      totalCopies: 8,
+      availableCopies: 3,
+      shelfLocation: 'Reference Desk R-04',
+      digitalPdfAvailable: true,
+      status: 'AVAILABLE'
     }
   ]
 };

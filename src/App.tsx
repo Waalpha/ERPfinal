@@ -17,6 +17,7 @@ import { SMSBroadcasts } from './pages/PrimarySchool/SMSBroadcasts';
 import { ReportCardGenerator } from './pages/PrimarySchool/ReportCardGenerator';
 import { SchoolSettings } from './pages/PrimarySchool/SchoolSettings';
 import { CollegeManagement } from './pages/College/CollegeManagement';
+import { TheologyManagement } from './pages/College/TheologyManagement';
 import { RetailPOSInventory } from './pages/Retail/RetailPOSInventory';
 import { HospitalManagement } from './pages/Hospital/HospitalManagement';
 import { LogoUploader } from './components/LogoUploader';
@@ -191,6 +192,11 @@ const MainLayout: React.FC = () => {
             {/* College / University Views */}
             {currentTab.startsWith('college-') && (
               <CollegeManagement currentTab={currentTab} />
+            )}
+
+            {/* Theology & Divinity Seminary Views */}
+            {currentTab.startsWith('theology-') && (
+              <TheologyManagement currentTab={currentTab} />
             )}
 
             {/* Retail / Wholesale Views */}

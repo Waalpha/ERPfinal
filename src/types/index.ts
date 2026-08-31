@@ -497,6 +497,149 @@ export interface HostelRoom {
   status: 'AVAILABLE' | 'FULL' | 'MAINTENANCE';
 }
 
+// ==========================================
+// THEOLOGY & DIVINITY FACULTY TYPES
+// (Spectrum: Certificate, Diploma, Higher Diploma, Bachelor of Theology)
+// ==========================================
+export type TheologyDegreeLevel = 
+  | 'CERTIFICATE' 
+  | 'DIPLOMA' 
+  | 'HIGHER_DIPLOMA' 
+  | 'BACHELORS';
+
+export type TheologyProgramLevel = TheologyDegreeLevel;
+
+export type TheologyMinistryTrack = 
+  | 'PASTORAL_MINISTRY' 
+  | 'BIBLICAL_STUDIES' 
+  | 'CHRISTIAN_EDUCATION' 
+  | 'MISSIOLOGY_EVANGELISM' 
+  | 'CHAPLAINCY' 
+  | 'BIBLICAL_COUNSELING'
+  | 'ORDINATION_PASTORAL'
+  | 'BIBLICAL_LANGUAGES_EXEGESIS'
+  | 'CHRISTIAN_EDUCATION_YOUTH'
+  | 'CHAPLAINCY_COUNSELING';
+
+export interface TheologyUnit {
+  id: string;
+  unitCode?: string; // e.g. "BIB101", "GRK201", "SYS301", "PAS401"
+  code?: string;
+  unitTitle?: string;
+  title?: string;
+  creditHours: number; // 2, 3, or 4 credit hours
+  level?: TheologyDegreeLevel;
+  semester: number; // 1, 2, 3, 4, 5, 6, 7, 8
+  category?: 'Biblical Languages' | 'Old Testament' | 'New Testament' | 'Systematic Theology' | 'Church History' | 'Practical Ministry' | 'Missiology & Apologetics' | 'BIBLICAL_STUDIES' | 'SYSTEMATIC_THEOLOGY' | 'PASTORAL_STUDIES';
+  description?: string;
+  prerequisites?: string[];
+  coreRequired?: boolean;
+  isCore?: boolean;
+}
+
+export interface TheologyProgram {
+  id: string;
+  tenantId: string;
+  code: string; // e.g. "CERT-BIB", "DIP-THEO", "HDIP-MIN", "BTH-401"
+  title: string;
+  level: TheologyDegreeLevel;
+  departmentId?: string;
+  departmentName?: string;
+  durationSemesters?: number; // Cert: 2 sems, Dip: 4 sems, Higher Dip: 6 sems, Bachelors: 8 sems
+  durationYears?: string; // e.g. "1 Year", "2 Years", "3 Years", "4 Years"
+  duration?: string;
+  tuitionPerSemester: number;
+  enrolledStudentsCount?: number;
+  ministryTrack?: TheologyMinistryTrack;
+  totalCreditHours?: number;
+  creditsRequired?: number;
+  requiredPracticumHours: number;
+  description: string;
+  targetCallings?: string[];
+  awardTitle?: string;
+  curriculumUnits?: TheologyUnit[];
+  units?: TheologyUnit[];
+}
+
+export interface TheologyStudent {
+  id: string;
+  tenantId: string;
+  regNo: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  gender?: 'Male' | 'Female' | 'Other';
+  programId: string;
+  programCode?: string;
+  programTitle: string;
+  level?: TheologyDegreeLevel;
+  ministryTrack: TheologyMinistryTrack;
+  yearOfStudy: number;
+  semester: number;
+  homeChurchDenomination?: string; // e.g. "AIC", "PCEA", "Anglican (ACK)", "CITAM / Pentecostal", "Baptist", "Methodist"
+  churchAffiliation?: string;
+  homeParish?: string;
+  presbyteryOrDiocese?: string;
+  mentorPastorName?: string;
+  mentorPastorPhone?: string;
+  ordainingBishopOrSupervisor?: string;
+  isOrdinationCandidate?: boolean;
+  fieldWorkPlacement?: string; // Church/Parish/Chaplaincy where student is attached
+  practicumHoursCompleted: number;
+  requiredPracticumHours: number;
+  sermonsEvaluatedCount?: number;
+  status: 'ACTIVE' | 'GRADUATED' | 'DEFERRED' | 'PRACTICUM_FIELD' | 'DISCONTINUED';
+  academicGPA?: number; // On 4.0 scale
+  feeBalance: number;
+  totalBilled: number;
+  totalPaid: number;
+  scholarshipOrSponsor?: string; // e.g. "Denominational Bursary (AIC Mission Fund)"
+  hostelRoomNumber?: string;
+  admissionDate: string;
+  notes?: string;
+}
+
+export interface MinistryPracticumLog {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  studentName: string;
+  studentRegNo: string;
+  programTitle?: string;
+  churchOrInstitution?: string;
+  churchOrLocation?: string;
+  supervisingPastorName?: string;
+  supervisorPastor?: string;
+  ministryType?: 'SUNDAY_SERMON' | 'PASTORAL_VISITATION' | 'YOUTH_BIBLE_STUDY' | 'HOSPITAL_CHAPLAINCY' | 'EVANGELISM_OUTREACH' | 'COMMUNITY_COUNSELING';
+  activityType?: 'SUNDAY_EXPOSITORY_PREACHING' | 'HOSPITAL_PASTORAL_CARE' | 'YOUTH_DISCIPLESHIP_MENTORING' | 'COMMUNITY_MISSION_EVANGELISM' | 'LITURGICAL_SERVICE_LEADING' | 'PRISON_MINISTRY_VISITATION' | string;
+  hoursLogged: number;
+  date: string;
+  scriptureTextOrTopic?: string;
+  reflectionNotes?: string;
+  supervisorFeedback?: string;
+  feedbackSupervisor?: string;
+  ratingScore?: number; // 1 to 5 stars / marks (out of 100)
+  status: 'VERIFIED' | 'PENDING' | 'LOGGED' | 'NEEDS_REVISION';
+}
+
+export interface TheologyLibraryResource {
+  id: string;
+  tenantId: string;
+  isbn?: string;
+  title: string;
+  author: string;
+  category: 'COMMENTARY' | 'SYSTEMATIC_THEOLOGY' | 'BIBLICAL_LANGUAGES' | 'CHURCH_HISTORY' | 'HOMILETICS_PREACHING' | 'CHRISTIAN_ETHICS' | 'PASTORAL_COUNSELING' | 'CHURCH_HISTORY_PATRISTICS' | 'HERMENEUTICS_EXEGESIS' | 'PASTORAL_HOMILETICS' | 'MISSIOLOGY_ETHICS';
+  levelFocus?: TheologyDegreeLevel | 'ALL_LEVELS';
+  totalCopies: number;
+  availableCopies: number;
+  shelfLocation: string;
+  description?: string;
+  publicationYear?: number;
+  digitalPdfAvailable?: boolean;
+  isDigitalAvailable?: boolean;
+  status?: 'AVAILABLE' | 'LOW_STOCK' | 'CHECKED_OUT';
+}
+
 // RETAIL & WHOLESALE BUSINESS SPECIFIC TYPES
 export interface RetailProduct {
   id: string;
@@ -625,7 +768,7 @@ export interface SystemAttentionItem {
   title: string;
   description: string;
   severity: 'CRITICAL' | 'WARNING' | 'INFO';
-  category: 'FINANCE' | 'ATTENDANCE' | 'INVENTORY' | 'DISCIPLINE' | 'SYSTEM';
+  category: 'FINANCE' | 'ATTENDANCE' | 'INVENTORY' | 'DISCIPLINE' | 'SYSTEM' | 'ACADEMICS';
   actionLabel?: string;
   actionRoute?: string;
   timestamp: string;

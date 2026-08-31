@@ -39,7 +39,12 @@ import {
   MedicalConsultation,
   PharmacyItem,
   SystemAttentionItem,
-  SearchResultItem
+  SearchResultItem,
+  TheologyProgram,
+  TheologyUnit,
+  TheologyStudent,
+  MinistryPracticumLog,
+  TheologyLibraryResource
 } from '../types';
 import {
   INITIAL_TENANTS,
@@ -70,7 +75,11 @@ import {
   INITIAL_RETAIL_CUSTOMERS,
   INITIAL_HOSPITAL_PATIENTS,
   INITIAL_MEDICAL_CONSULTATIONS,
-  INITIAL_PHARMACY_ITEMS
+  INITIAL_PHARMACY_ITEMS,
+  INITIAL_THEOLOGY_PROGRAMS,
+  INITIAL_THEOLOGY_STUDENTS,
+  INITIAL_THEOLOGY_PRACTICUM_LOGS,
+  INITIAL_THEOLOGY_LIBRARY
 } from '../data/initialData';
 
 interface AuthContextType {
@@ -135,6 +144,12 @@ interface AuthContextType {
   medicalConsultations: MedicalConsultation[];
   pharmacyItems: PharmacyItem[];
 
+  // Theology Data (Certificate to Bachelor of Theology)
+  theologyPrograms: TheologyProgram[];
+  theologyStudents: TheologyStudent[];
+  theologyPracticumLogs: MinistryPracticumLog[];
+  theologyLibraryResources: TheologyLibraryResource[];
+
   // Action Center & Attention Items
   needsAttentionItems: SystemAttentionItem[];
 
@@ -187,6 +202,15 @@ interface AuthContextType {
   // Hospital Actions
   admitHospitalPatient: (patient: Omit<HospitalPatient, 'id' | 'tenantId' | 'lastVisitDate' | 'status'>) => Promise<HospitalPatient>;
   recordMedicalConsultation: (consultation: Omit<MedicalConsultation, 'id' | 'tenantId' | 'date' | 'status'>) => Promise<MedicalConsultation>;
+
+  // Theology Actions (Certificate, Diploma, Higher Diploma, Bachelor of Theology)
+  addTheologyProgram: (program: Omit<TheologyProgram, 'id' | 'tenantId' | 'enrolledStudentsCount'>) => Promise<TheologyProgram>;
+  updateTheologyProgram: (programId: string, updates: Partial<TheologyProgram>) => Promise<void>;
+  admitTheologyStudent: (student: Omit<TheologyStudent, 'id' | 'tenantId' | 'feeBalance' | 'totalBilled' | 'totalPaid' | 'practicumHoursCompleted' | 'sermonsEvaluatedCount'>) => Promise<TheologyStudent>;
+  updateTheologyStudent: (studentId: string, updates: Partial<TheologyStudent>) => Promise<void>;
+  recordMinistryPracticumLog: (log: Omit<MinistryPracticumLog, 'id' | 'tenantId' | 'status'>) => Promise<MinistryPracticumLog>;
+  verifyMinistryPracticumLog: (logId: string, status: 'VERIFIED' | 'NEEDS_REVISION', feedback?: string) => Promise<void>;
+  addTheologyLibraryResource: (resource: Omit<TheologyLibraryResource, 'id' | 'tenantId' | 'status'>) => Promise<TheologyLibraryResource>;
 
   // Permissions & Security Checkers
   canAccessModule: (moduleName: string) => boolean;
@@ -250,6 +274,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [hospitalPatientsMap, setHospitalPatientsMap] = useState<Record<string, HospitalPatient[]>>(INITIAL_HOSPITAL_PATIENTS);
   const [medicalConsultationsMap, setMedicalConsultationsMap] = useState<Record<string, MedicalConsultation[]>>(INITIAL_MEDICAL_CONSULTATIONS);
   const [pharmacyItemsMap] = useState<Record<string, PharmacyItem[]>>(INITIAL_PHARMACY_ITEMS);
+
+  // Theology Data Collections (Certificate, Diploma, Higher Diploma, Bachelor of Theology)
+  const [theologyProgramsMap, setTheologyProgramsMap] = useState<Record<string, TheologyProgram[]>>(INITIAL_THEOLOGY_PROGRAMS);
+  const [theologyStudentsMap, setTheologyStudentsMap] = useState<Record<string, TheologyStudent[]>>(INITIAL_THEOLOGY_STUDENTS);
+  const [theologyPracticumLogsMap, setTheologyPracticumLogsMap] = useState<Record<string, MinistryPracticumLog[]>>(INITIAL_THEOLOGY_PRACTICUM_LOGS);
+  const [theologyLibraryMap, setTheologyLibraryMap] = useState<Record<string, TheologyLibraryResource[]>>(INITIAL_THEOLOGY_LIBRARY);
 
   const clearError = () => setError(null);
 
@@ -563,6 +593,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const medicalConsultations = useMemo(() => medicalConsultationsMap[currentTenantId] || [], [medicalConsultationsMap, currentTenantId]);
   const pharmacyItems = useMemo(() => pharmacyItemsMap[currentTenantId] || [], [pharmacyItemsMap, currentTenantId]);
 
+  // Theology Getters (Certificate, Diploma, Higher Diploma, Bachelor of Theology)
+  const theologyPrograms = useMemo(() => theologyProgramsMap[currentTenantId] || [], [theologyProgramsMap, currentTenantId]);
+  const theologyStudents = useMemo(() => theologyStudentsMap[currentTenantId] || [], [theologyStudentsMap, currentTenantId]);
+  const theologyPracticumLogs = useMemo(() => theologyPracticumLogsMap[currentTenantId] || [], [theologyPracticumLogsMap, currentTenantId]);
+  const theologyLibraryResources = useMemo(() => theologyLibraryMap[currentTenantId] || [], [theologyLibraryMap, currentTenantId]);
+
   // Dynamic "Needs Attention" Items calculation
   const needsAttentionItems = useMemo<SystemAttentionItem[]>(() => {
     const items: SystemAttentionItem[] = [];
@@ -644,10 +680,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           timestamp: new Date().toISOString()
         });
       }
+
+      // Check Theology Practicum Logs & Fieldwork Hours
+      if (theologyStudents.length > 0) {
+        const behindPracticum = theologyStudents.filter(s => s.practicumHoursCompleted < s.requiredPracticumHours * 0.4 && s.yearOfStudy >= 2);
+        if (behindPracticum.length > 0) {
+          items.push({
+            id: 'attn-theo-prac',
+            tenantId: tenant.id,
+            title: `${behindPracticum.length} Theology Seminarians Behind Fieldwork Practicum Hours`,
+            description: `Ordination tracks require minimum ministry logs before final semester clearance.`,
+            severity: 'WARNING',
+            category: 'ACADEMICS',
+            actionLabel: 'View Ministry Logs',
+            actionRoute: 'theology-practicum',
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
     }
 
     return items;
-  }, [tenant, students, discipline, attendance, retailProducts, collegeStudents]);
+  }, [tenant, students, discipline, attendance, retailProducts, collegeStudents, theologyStudents]);
 
   // Global Search Utility across current tenant
   const searchCurrentTenant = useCallback((query: string): SearchResultItem[] => {
@@ -1247,6 +1301,144 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newBook;
   };
 
+  // THEOLOGY ACTIONS (Certificate, Diploma, Higher Diploma, Bachelor of Theology)
+  const addTheologyProgram = async (programData: Omit<TheologyProgram, 'id' | 'tenantId' | 'enrolledStudentsCount'>): Promise<TheologyProgram> => {
+    if (!tenant) throw new Error("No active tenant");
+    const newProgram: TheologyProgram = {
+      ...programData,
+      id: `theo-prog-${Date.now()}`,
+      tenantId: tenant.id,
+      enrolledStudentsCount: 0
+    };
+    setTheologyProgramsMap(prev => ({
+      ...prev,
+      [tenant.id]: [...(prev[tenant.id] || []), newProgram]
+    }));
+    logAuditEvent('THEOLOGY_PROGRAM_CREATED', `Created theology program: ${newProgram.code} - ${newProgram.title} (${newProgram.level})`, 'ACADEMICS');
+    return newProgram;
+  };
+
+  const updateTheologyProgram = async (programId: string, updates: Partial<TheologyProgram>) => {
+    if (!tenant) return;
+    setTheologyProgramsMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(p => p.id === programId ? { ...p, ...updates } : p)
+    }));
+    logAuditEvent('THEOLOGY_PROGRAM_UPDATED', `Updated theology program: ${programId}`, 'ACADEMICS');
+  };
+
+  const admitTheologyStudent = async (studentData: Omit<TheologyStudent, 'id' | 'tenantId' | 'feeBalance' | 'totalBilled' | 'totalPaid' | 'practicumHoursCompleted' | 'sermonsEvaluatedCount'>): Promise<TheologyStudent> => {
+    if (!tenant) throw new Error("No active tenant");
+    const targetProgram = (theologyProgramsMap[tenant.id] || []).find(p => p.id === studentData.programId);
+    const semesterTuition = targetProgram?.tuitionPerSemester || 45000;
+
+    const newStudent: TheologyStudent = {
+      ...studentData,
+      id: `theo-stud-${Date.now()}`,
+      tenantId: tenant.id,
+      feeBalance: semesterTuition,
+      totalBilled: semesterTuition,
+      totalPaid: 0,
+      practicumHoursCompleted: 0,
+      sermonsEvaluatedCount: 0
+    };
+    setTheologyStudentsMap(prev => ({
+      ...prev,
+      [tenant.id]: [newStudent, ...(prev[tenant.id] || [])]
+    }));
+    // Update program enrolled count
+    setTheologyProgramsMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(p => p.id === studentData.programId ? { ...p, enrolledStudentsCount: p.enrolledStudentsCount + 1 } : p)
+    }));
+    logAuditEvent('THEOLOGY_STUDENT_ADMITTED', `Admitted theology candidate ${newStudent.fullName} (${newStudent.regNo}) to ${newStudent.programTitle}`, 'ACADEMICS');
+    return newStudent;
+  };
+
+  const updateTheologyStudent = async (studentId: string, updates: Partial<TheologyStudent>) => {
+    if (!tenant) return;
+    setTheologyStudentsMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(s => s.id === studentId ? { ...s, ...updates } : s)
+    }));
+    logAuditEvent('THEOLOGY_STUDENT_UPDATED', `Updated seminarian record for student ${studentId}`, 'ACADEMICS');
+  };
+
+  const recordMinistryPracticumLog = async (logData: Omit<MinistryPracticumLog, 'id' | 'tenantId' | 'status'>): Promise<MinistryPracticumLog> => {
+    if (!tenant) throw new Error("No active tenant");
+    const newLog: MinistryPracticumLog = {
+      ...logData,
+      id: `prac-${Date.now()}`,
+      tenantId: tenant.id,
+      status: 'LOGGED'
+    };
+    setTheologyPracticumLogsMap(prev => ({
+      ...prev,
+      [tenant.id]: [newLog, ...(prev[tenant.id] || [])]
+    }));
+    logAuditEvent('PRACTICUM_LOG_RECORDED', `Recorded ${newLog.hoursLogged} ministry practicum hours for ${newLog.studentName}`, 'ACADEMICS');
+    return newLog;
+  };
+
+  const verifyMinistryPracticumLog = async (logId: string, status: 'VERIFIED' | 'NEEDS_REVISION', feedback?: string) => {
+    if (!tenant) return;
+    let studentId = '';
+    let hoursToAdd = 0;
+
+    setTheologyPracticumLogsMap(prev => {
+      const currentLogs = prev[tenant.id] || [];
+      return {
+        ...prev,
+        [tenant.id]: currentLogs.map(l => {
+          if (l.id === logId) {
+            studentId = l.studentId;
+            hoursToAdd = l.hoursLogged;
+            return {
+              ...l,
+              status,
+              feedbackSupervisor: feedback || l.feedbackSupervisor,
+              approvedByDeanAt: status === 'VERIFIED' ? new Date().toISOString() : undefined
+            };
+          }
+          return l;
+        })
+      };
+    });
+
+    if (status === 'VERIFIED' && studentId && hoursToAdd > 0) {
+      setTheologyStudentsMap(prev => ({
+        ...prev,
+        [tenant.id]: (prev[tenant.id] || []).map(s => {
+          if (s.id === studentId) {
+            return {
+              ...s,
+              practicumHoursCompleted: s.practicumHoursCompleted + hoursToAdd
+            };
+          }
+          return s;
+        })
+      }));
+    }
+
+    logAuditEvent('PRACTICUM_LOG_VERIFIED', `Dean verified ministry log ${logId} as ${status}`, 'ACADEMICS');
+  };
+
+  const addTheologyLibraryResource = async (resourceData: Omit<TheologyLibraryResource, 'id' | 'tenantId' | 'status'>): Promise<TheologyLibraryResource> => {
+    if (!tenant) throw new Error("No active tenant");
+    const newResource: TheologyLibraryResource = {
+      ...resourceData,
+      id: `theo-lib-${Date.now()}`,
+      tenantId: tenant.id,
+      status: 'AVAILABLE'
+    };
+    setTheologyLibraryMap(prev => ({
+      ...prev,
+      [tenant.id]: [newResource, ...(prev[tenant.id] || [])]
+    }));
+    logAuditEvent('THEOLOGY_RESOURCE_ADDED', `Added divinity & patristic resource: ${newResource.title}`, 'ACADEMICS');
+    return newResource;
+  };
+
   // RETAIL ACTIONS
   const recordRetailSale = async (saleData: Omit<RetailSale, 'id' | 'tenantId' | 'receiptNumber' | 'createdAt' | 'status'>): Promise<RetailSale> => {
     if (!tenant) throw new Error("No active tenant");
@@ -1507,6 +1699,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await setDoc(doc(db, 'tenants', t.id, 'hospital_patients', pat.id), pat, { merge: true });
           count++;
         }
+
+        // Theology programs
+        const tTheologyProgs = theologyProgramsMap[t.id] || [];
+        for (const prog of tTheologyProgs) {
+          await setDoc(doc(db, 'tenants', t.id, 'theology_programs', prog.id), prog, { merge: true });
+          count++;
+        }
+
+        // Theology students
+        const tTheologyStudents = theologyStudentsMap[t.id] || [];
+        for (const tStud of tTheologyStudents) {
+          await setDoc(doc(db, 'tenants', t.id, 'theology_students', tStud.id), tStud, { merge: true });
+          count++;
+        }
+
+        // Theology practicum logs
+        const tTheologyPracticum = theologyPracticumLogsMap[t.id] || [];
+        for (const tPrac of tTheologyPracticum) {
+          await setDoc(doc(db, 'tenants', t.id, 'theology_practicum_logs', tPrac.id), tPrac, { merge: true });
+          count++;
+        }
+
+        // Theology library resources
+        const tTheologyLib = theologyLibraryMap[t.id] || [];
+        for (const tLib of tTheologyLib) {
+          await setDoc(doc(db, 'tenants', t.id, 'theology_library', tLib.id), tLib, { merge: true });
+          count++;
+        }
       }
 
       // 2. Sync all platform users
@@ -1538,6 +1758,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     attendanceMap,
     retailProductsMap,
     hospitalPatientsMap,
+    theologyProgramsMap,
+    theologyStudentsMap,
+    theologyPracticumLogsMap,
+    theologyLibraryMap,
     logAuditEvent
   ]);
 
@@ -1604,6 +1828,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hospitalPatients,
         medicalConsultations,
         pharmacyItems,
+        theologyPrograms,
+        theologyStudents,
+        theologyPracticumLogs,
+        theologyLibraryResources,
         needsAttentionItems,
         searchCurrentTenant,
         admitStudent,
@@ -1631,6 +1859,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addCollegeDepartment,
         admitCollegeStudent,
         addLibraryBook,
+        addTheologyProgram,
+        updateTheologyProgram,
+        admitTheologyStudent,
+        updateTheologyStudent,
+        recordMinistryPracticumLog,
+        verifyMinistryPracticumLog,
+        addTheologyLibraryResource,
         recordRetailSale,
         addRetailProduct,
         updateProductStock,
