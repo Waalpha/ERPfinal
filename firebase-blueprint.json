@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "PlatformUser": {
+      "title": "Platform User",
+      "description": "Global user identity linked to a specific tenant with role and permissions",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "tenantId": { "type": "string", "maxLength": 64 },
+        "role": { "type": "string", "enum": ["SUPER_ADMIN", "TENANT_ADMIN", "MANAGER", "ACCOUNTANT", "CASHIER", "TEACHER", "STAFF", "VIEWER"] },
+        "isActive": { "type": "boolean" },
+        "phone": { "type": "string" },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["uid", "email", "tenantId", "role", "isActive"]
+    },
+    "Tenant": {
+      "title": "Tenant Organization",
+      "description": "Enterprise tenant record for School, Hospital, Business, or Retail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 150 },
+        "code": { "type": "string", "maxLength": 32 },
+        "type": { "type": "string", "enum": ["PRIMARY_SCHOOL", "SECONDARY_SCHOOL", "COLLEGE", "UNIVERSITY", "HOSPITAL", "BUSINESS", "RETAIL"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED", "TRIAL"] },
+        "plan": { "type": "string", "enum": ["BASIC", "PREMIUM", "ENTERPRISE"] },
+        "modules": { "type": "array", "items": { "type": "string" } },
+        "currency": { "type": "string" },
+        "currentTerm": { "type": "string" },
+        "currentAcademicYear": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "type", "status", "plan", "modules", "currency"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Primary school student record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "admissionNo": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "gender": { "type": "string" },
+        "grade": { "type": "string" },
+        "stream": { "type": "string" },
+        "parentName": { "type": "string" },
+        "parentPhone": { "type": "string" },
+        "feeBalance": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "tenantId", "admissionNo", "firstName", "lastName", "grade", "parentName", "parentPhone", "status"]
+    }
+  },
+  "firestore": {
+    "/platform_users/{userId}": {
+      "schema": "PlatformUser",
+      "description": "Platform user profiles for multi-tenant access control"
+    },
+    "/tenants/{tenantId}": {
+      "schema": "Tenant",
+      "description": "Tenant enterprise configurations"
+    },
+    "/tenants/{tenantId}/students/{studentId}": {
+      "schema": "Student",
+      "description": "Isolated student records per tenant"
+    }
+  }
+}

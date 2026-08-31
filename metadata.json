@@ -1,0 +1,6 @@
+{
+  "name": "DAVETECH ERP",
+  "description": "Enterprise Multi-Tenant SaaS ERP platform supporting Primary Schools, High Schools, Colleges, and Businesses with role-based access and student/finance modules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
