@@ -22,9 +22,10 @@ import { RetailPOSInventory } from './pages/Retail/RetailPOSInventory';
 import { HospitalManagement } from './pages/Hospital/HospitalManagement';
 import { LogoUploader } from './components/LogoUploader';
 import { Student, TenantType, TenantPlan } from './types';
+import { Building2, ArrowRight } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
-  const { user, tenant, isPlatformMode, createTenant, subscriptionTiers } = useAuth();
+  const { user, tenant, isPlatformMode, createTenant, subscriptionTiers, switchToPlatformMaster } = useAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState<string>(() => {
     if (isPlatformMode || user?.role === 'SUPER_ADMIN') return 'super-admin-overview';
@@ -181,6 +182,41 @@ const MainLayout: React.FC = () => {
         {/* Dynamic Route Content */}
         <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 lg:p-8 pb-24 lg:pb-8">
           <div className="max-w-7xl mx-auto">
+            {/* Super Admin Tenant Inspection Context Banner */}
+            {!isPlatformMode && user?.role === 'SUPER_ADMIN' && tenant && (
+              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/40 shadow-lg text-white flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in">
+                <div className="flex items-center space-x-3.5">
+                  <div className="h-12 w-12 rounded-xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold flex-shrink-0">
+                    <Building2 className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2 text-xs font-mono">
+                      <span className="bg-emerald-500 text-slate-950 px-2.5 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider">
+                        SUPER ADMIN INSPECTION MODE
+                      </span>
+                      <span className="text-indigo-300">Tenant Code: {tenant.code}</span>
+                    </div>
+                    <div className="text-base font-black text-white mt-1 flex items-center space-x-2">
+                      <span>TENANT: {tenant.name}</span>
+                      <span className="text-xs text-indigo-300 font-normal">({tenant.type.replace('_', ' ')})</span>
+                    </div>
+                    <div className="text-xs text-slate-300 font-mono mt-0.5">
+                      Domain: https://{tenant.subdomain || tenant.code.toLowerCase()}.davetech.co.ke • Plan: <span className="text-emerald-400 font-bold">{tenant.plan}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={switchToPlatformMaster}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center space-x-2"
+                  >
+                    <span>Return to Master Control</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Super Admin Console Views */}
             {user?.role === 'SUPER_ADMIN' && currentTab.startsWith('super-admin') && (
               <SuperAdminDashboard

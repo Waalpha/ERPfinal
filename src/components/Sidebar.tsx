@@ -37,7 +37,11 @@ import {
   Flame,
   Scroll,
   HeartHandshake,
-  Church
+  Church,
+  Globe,
+  ShieldCheck,
+  Cloud,
+  Database
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -63,13 +67,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  // Super Admin / Platform Master Navigation Items
+  // Super Admin / Platform Master Navigation Items (DAVETECH Cloud inspired by Render + Cloudflare)
   const superAdminNav = [
-    { id: 'super-admin-overview', label: 'Platform Hub & KPIs', icon: LayoutDashboard },
-    { id: 'super-admin-tenants', label: 'Hosted Tenants Fleet', icon: Building, badge: `${allTenants.length}` },
-    { id: 'super-admin-users', label: 'Global RBAC & Access', icon: UserCheck },
-    { id: 'super-admin-plans', label: 'Subscriptions & Tiers', icon: CreditCard },
-    { id: 'super-admin-audit', label: 'Global Audit Trail', icon: History }
+    { id: 'super-admin-overview', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'super-admin-tenants', label: 'Projects / Tenants', icon: Building, badge: `${allTenants.length}` },
+    { id: 'super-admin-domains', label: 'Domains & DNS', icon: Globe },
+    { id: 'super-admin-ssl', label: 'SSL Certificates', icon: ShieldCheck },
+    { id: 'super-admin-deployments', label: 'Deployments', icon: Cloud },
+    { id: 'super-admin-databases', label: 'Databases', icon: Database },
+    { id: 'super-admin-users', label: 'Users & Access', icon: UserCheck },
+    { id: 'super-admin-plans', label: 'Billing & Tiers', icon: CreditCard },
+    { id: 'super-admin-audit', label: 'Logs', icon: History },
+    { id: 'super-admin-settings', label: 'Settings', icon: Settings }
   ];
 
   // School Navigation Groups

@@ -121,6 +121,7 @@ export interface Tenant {
   code: string;
   subdomain: string; // e.g. "staustins" -> https://staustins.davetech.co.ke
   customDomain?: string; // e.g. "portal.staustins.ac.ke"
+  publicWebsite?: string; // e.g. "https://www.staustins.ac.ke"
   dnsStatus?: 'CONFIGURED' | 'VERIFYING' | 'PENDING';
   type: TenantType;
   status: TenantStatus;

@@ -661,7 +661,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const students = useMemo(() => studentsMap[currentTenantId] || [], [studentsMap, currentTenantId]);
   const staff = useMemo(() => staffMap[currentTenantId] || [], [staffMap, currentTenantId]);
   const classes = useMemo(() => classesMap[currentTenantId] || [], [classesMap, currentTenantId]);
-  const subjects = useMemo(() => subjectsList.filter(s => s.tenantId === currentTenantId || s.tenantId === 'tenant-st-austins'), [subjectsList, currentTenantId]);
+  const subjects = useMemo(() => subjectsList.filter(s => s.tenantId === currentTenantId || (!s.tenantId && currentTenantId === 'tenant-st-austins')), [subjectsList, currentTenantId]);
   const assessments = useMemo(() => assessmentsMap[currentTenantId] || [], [assessmentsMap, currentTenantId]);
   const feeStructure = useMemo(() => feeStructureMap[currentTenantId] || [], [feeStructureMap, currentTenantId]);
   const payments = useMemo(() => paymentsMap[currentTenantId] || [], [paymentsMap, currentTenantId]);

@@ -26,6 +26,7 @@ export const SchoolSettings: React.FC = () => {
   const [logoUrl, setLogoUrl] = useState(tenant?.logoUrl || '');
   const [subdomain, setSubdomain] = useState(tenant?.subdomain || tenant?.code?.toLowerCase() || '');
   const [customDomain, setCustomDomain] = useState(tenant?.customDomain || '');
+  const [publicWebsite, setPublicWebsite] = useState(tenant?.publicWebsite || '');
   const [address, setAddress] = useState(tenant?.address || '');
   const [phone, setPhone] = useState(tenant?.phone || '');
   const [contactEmail, setContactEmail] = useState(tenant?.contactEmail || '');
@@ -54,6 +55,7 @@ export const SchoolSettings: React.FC = () => {
       logoUrl,
       subdomain: cleanSubdomain,
       customDomain: customDomain.trim().toLowerCase() || undefined,
+      publicWebsite: publicWebsite.trim() || undefined,
       dnsStatus: 'CONFIGURED',
       address,
       phone,
@@ -198,6 +200,23 @@ export const SchoolSettings: React.FC = () => {
               />
               <p className="text-[10px] text-slate-400 mt-1">
                 To link your custom domain, add a CNAME record pointing to <code className="font-bold text-slate-600 font-mono">{cleanSubdomain || 'tenant'}.{MAIN_DOMAIN.toLowerCase()}</code>
+              </p>
+            </div>
+
+            {/* Public Website */}
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                Public Official Website
+              </label>
+              <input
+                type="url"
+                value={publicWebsite}
+                onChange={(e) => setPublicWebsite(e.target.value)}
+                placeholder="e.g. https://www.staustins.ac.ke"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono text-xs focus:outline-none"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Link to your institution's main public marketing or information website.
               </p>
             </div>
           </div>
