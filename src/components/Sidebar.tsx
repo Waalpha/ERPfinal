@@ -128,6 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'theology-programs', label: 'Theology Programs (Cert-B.Th)', icon: Flame },
         { id: 'theology-students', label: 'Seminarians & Candidates', icon: GraduationCap },
+        { id: 'theology-fees', label: 'Seminary Fees & Sponsorship', icon: Receipt },
         { id: 'theology-practicum', label: 'Ministry Fieldwork Logs', icon: HeartHandshake },
         { id: 'theology-library', label: 'Patristics & Divinity Library', icon: Scroll }
       ]
@@ -158,6 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'retail-suppliers', label: 'Suppliers & Vendors', icon: Truck },
         { id: 'retail-customers', label: 'Customer Accounts & Credit', icon: UserSquare2 },
+        { id: 'retail-fees', label: 'Invoicing & Debtor Billing', icon: Receipt },
         { id: 'retail-settings', label: 'Store Settings', icon: Settings }
       ]
     }

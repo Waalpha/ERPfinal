@@ -27,3 +27,35 @@ export const isFirebaseConfigured = Boolean(appletConfig?.projectId || import.me
 export const firebaseProjectId = config.projectId;
 export const firestoreDatabaseName = firestoreDbId || '(default)';
 
+/**
+ * Recursively removes all keys with `undefined` values from an object or array,
+ * ensuring it is 100% safe for Firestore operations (setDoc, updateDoc, addDoc).
+ */
+export function cleanFirestoreData<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return null as unknown as T;
+  }
+  
+  if (Array.isArray(data)) {
+    return data
+      .filter((item) => item !== undefined)
+      .map((item) => cleanFirestoreData(item)) as unknown as T;
+  }
+  
+  if (typeof data === 'object') {
+    if (data instanceof Date) {
+      return data.toISOString() as unknown as T;
+    }
+    
+    const cleaned: Record<string, any> = {};
+    for (const [key, val] of Object.entries(data)) {
+      if (val !== undefined) {
+        cleaned[key] = cleanFirestoreData(val);
+      }
+    }
+    return cleaned as T;
+  }
+  
+  return data;
+}
+

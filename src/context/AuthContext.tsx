@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { auth, db, googleProvider, firebaseProjectId, firestoreDatabaseName, isFirebaseConfigured } from '../firebase/config';
+import { auth, db, googleProvider, firebaseProjectId, firestoreDatabaseName, isFirebaseConfigured, cleanFirestoreData } from '../firebase/config';
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import {
@@ -44,7 +44,17 @@ import {
   TheologyUnit,
   TheologyStudent,
   MinistryPracticumLog,
-  TheologyLibraryResource
+  TheologyLibraryResource,
+  CollegeFeeStructureItem,
+  CollegeInvoice,
+  CollegePayment,
+  TheologyFeePayment,
+  TheologyInvoice,
+  HospitalBillingInvoice,
+  HospitalBillingPayment,
+  HospitalServiceTariff,
+  RetailCustomerInvoice,
+  RetailCustomerPayment
 } from '../types';
 import {
   INITIAL_TENANTS,
@@ -79,7 +89,17 @@ import {
   INITIAL_THEOLOGY_PROGRAMS,
   INITIAL_THEOLOGY_STUDENTS,
   INITIAL_THEOLOGY_PRACTICUM_LOGS,
-  INITIAL_THEOLOGY_LIBRARY
+  INITIAL_THEOLOGY_LIBRARY,
+  INITIAL_COLLEGE_FEE_STRUCTURE,
+  INITIAL_COLLEGE_INVOICES,
+  INITIAL_COLLEGE_PAYMENTS,
+  INITIAL_THEOLOGY_INVOICES,
+  INITIAL_THEOLOGY_PAYMENTS,
+  INITIAL_HOSPITAL_TARIFFS,
+  INITIAL_HOSPITAL_INVOICES,
+  INITIAL_HOSPITAL_PAYMENTS,
+  INITIAL_RETAIL_INVOICES,
+  INITIAL_RETAIL_PAYMENTS
 } from '../data/initialData';
 
 interface AuthContextType {
@@ -132,23 +152,33 @@ interface AuthContextType {
   collegeStudents: CollegeStudent[];
   libraryBooks: LibraryBook[];
   hostelRooms: HostelRoom[];
+  collegeFeeStructures: CollegeFeeStructureItem[];
+  collegeInvoices: CollegeInvoice[];
+  collegePayments: CollegePayment[];
 
   // Retail Data
   retailProducts: RetailProduct[];
   retailSales: RetailSale[];
   retailSuppliers: RetailSupplier[];
   retailCustomers: RetailCustomer[];
+  retailInvoices: RetailCustomerInvoice[];
+  retailCustomerPayments: RetailCustomerPayment[];
 
   // Hospital Data
   hospitalPatients: HospitalPatient[];
   medicalConsultations: MedicalConsultation[];
   pharmacyItems: PharmacyItem[];
+  hospitalTariffs: HospitalServiceTariff[];
+  hospitalInvoices: HospitalBillingInvoice[];
+  hospitalPayments: HospitalBillingPayment[];
 
   // Theology Data (Certificate to Bachelor of Theology)
   theologyPrograms: TheologyProgram[];
   theologyStudents: TheologyStudent[];
   theologyPracticumLogs: MinistryPracticumLog[];
   theologyLibraryResources: TheologyLibraryResource[];
+  theologyInvoices: TheologyInvoice[];
+  theologyPayments: TheologyFeePayment[];
 
   // Action Center & Attention Items
   needsAttentionItems: SystemAttentionItem[];
@@ -191,6 +221,9 @@ interface AuthContextType {
   addCollegeDepartment: (dept: Omit<CollegeDepartment, 'id' | 'tenantId' | 'facultyCount' | 'courseCount'>) => Promise<CollegeDepartment>;
   admitCollegeStudent: (student: Omit<CollegeStudent, 'id' | 'tenantId' | 'feeBalance' | 'totalBilled' | 'totalPaid'>) => Promise<CollegeStudent>;
   addLibraryBook: (book: Omit<LibraryBook, 'id' | 'tenantId' | 'status'>) => Promise<LibraryBook>;
+  addCollegeFeeStructureItem: (item: Omit<CollegeFeeStructureItem, 'id' | 'tenantId'>) => Promise<CollegeFeeStructureItem>;
+  generateCollegeInvoice: (invoice: Omit<CollegeInvoice, 'id' | 'tenantId' | 'invoiceNo' | 'createdAt'>) => Promise<CollegeInvoice>;
+  recordCollegePayment: (payment: Omit<CollegePayment, 'id' | 'tenantId' | 'receiptNo' | 'status'>) => Promise<CollegePayment>;
 
   // Retail Actions
   recordRetailSale: (saleData: Omit<RetailSale, 'id' | 'tenantId' | 'receiptNumber' | 'createdAt' | 'status'>) => Promise<RetailSale>;
@@ -198,10 +231,15 @@ interface AuthContextType {
   updateProductStock: (productId: string, newStock: number) => Promise<void>;
   addRetailSupplier: (supplier: Omit<RetailSupplier, 'id' | 'tenantId' | 'balanceOwed' | 'totalPurchased'>) => Promise<RetailSupplier>;
   addRetailCustomer: (customer: Omit<RetailCustomer, 'id' | 'tenantId' | 'currentCredit' | 'totalSpend' | 'lastPurchaseDate'>) => Promise<RetailCustomer>;
+  createRetailCustomerInvoice: (invoice: Omit<RetailCustomerInvoice, 'id' | 'tenantId' | 'invoiceNo' | 'issueDate'>) => Promise<RetailCustomerInvoice>;
+  recordRetailCustomerPayment: (payment: Omit<RetailCustomerPayment, 'id' | 'tenantId' | 'receiptNo' | 'status'>) => Promise<RetailCustomerPayment>;
 
   // Hospital Actions
   admitHospitalPatient: (patient: Omit<HospitalPatient, 'id' | 'tenantId' | 'lastVisitDate' | 'status'>) => Promise<HospitalPatient>;
   recordMedicalConsultation: (consultation: Omit<MedicalConsultation, 'id' | 'tenantId' | 'date' | 'status'>) => Promise<MedicalConsultation>;
+  createHospitalInvoice: (invoice: Omit<HospitalBillingInvoice, 'id' | 'tenantId' | 'invoiceNo' | 'invoiceDate'>) => Promise<HospitalBillingInvoice>;
+  recordHospitalPayment: (payment: Omit<HospitalBillingPayment, 'id' | 'tenantId' | 'receiptNo' | 'status'>) => Promise<HospitalBillingPayment>;
+  addHospitalTariff: (tariff: Omit<HospitalServiceTariff, 'id' | 'tenantId'>) => Promise<HospitalServiceTariff>;
 
   // Theology Actions (Certificate, Diploma, Higher Diploma, Bachelor of Theology)
   addTheologyProgram: (program: Omit<TheologyProgram, 'id' | 'tenantId' | 'enrolledStudentsCount'>) => Promise<TheologyProgram>;
@@ -211,6 +249,8 @@ interface AuthContextType {
   recordMinistryPracticumLog: (log: Omit<MinistryPracticumLog, 'id' | 'tenantId' | 'status'>) => Promise<MinistryPracticumLog>;
   verifyMinistryPracticumLog: (logId: string, status: 'VERIFIED' | 'NEEDS_REVISION', feedback?: string) => Promise<void>;
   addTheologyLibraryResource: (resource: Omit<TheologyLibraryResource, 'id' | 'tenantId' | 'status'>) => Promise<TheologyLibraryResource>;
+  generateTheologyInvoice: (invoice: Omit<TheologyInvoice, 'id' | 'tenantId' | 'invoiceNo' | 'createdAt'>) => Promise<TheologyInvoice>;
+  recordTheologyPayment: (payment: Omit<TheologyFeePayment, 'id' | 'tenantId' | 'receiptNo' | 'status'>) => Promise<TheologyFeePayment>;
 
   // Permissions & Security Checkers
   canAccessModule: (moduleName: string) => boolean;
@@ -263,23 +303,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [collegeStudentsMap, setCollegeStudentsMap] = useState<Record<string, CollegeStudent[]>>(INITIAL_COLLEGE_STUDENTS);
   const [libraryBooksMap, setLibraryBooksMap] = useState<Record<string, LibraryBook[]>>(INITIAL_LIBRARY_BOOKS);
   const [hostelRoomsMap] = useState<Record<string, HostelRoom[]>>(INITIAL_HOSTEL_ROOMS);
+  const [collegeFeeStructureMap, setCollegeFeeStructureMap] = useState<Record<string, CollegeFeeStructureItem[]>>(INITIAL_COLLEGE_FEE_STRUCTURE);
+  const [collegeInvoicesMap, setCollegeInvoicesMap] = useState<Record<string, CollegeInvoice[]>>(INITIAL_COLLEGE_INVOICES);
+  const [collegePaymentsMap, setCollegePaymentsMap] = useState<Record<string, CollegePayment[]>>(INITIAL_COLLEGE_PAYMENTS);
 
   // Retail Data Collections
   const [retailProductsMap, setRetailProductsMap] = useState<Record<string, RetailProduct[]>>(INITIAL_RETAIL_PRODUCTS);
   const [retailSalesMap, setRetailSalesMap] = useState<Record<string, RetailSale[]>>(INITIAL_RETAIL_SALES);
   const [retailSuppliersMap, setRetailSuppliersMap] = useState<Record<string, RetailSupplier[]>>(INITIAL_RETAIL_SUPPLIERS);
   const [retailCustomersMap, setRetailCustomersMap] = useState<Record<string, RetailCustomer[]>>(INITIAL_RETAIL_CUSTOMERS);
+  const [retailInvoicesMap, setRetailInvoicesMap] = useState<Record<string, RetailCustomerInvoice[]>>(INITIAL_RETAIL_INVOICES);
+  const [retailCustomerPaymentsMap, setRetailCustomerPaymentsMap] = useState<Record<string, RetailCustomerPayment[]>>(INITIAL_RETAIL_PAYMENTS);
 
   // Hospital Data Collections
   const [hospitalPatientsMap, setHospitalPatientsMap] = useState<Record<string, HospitalPatient[]>>(INITIAL_HOSPITAL_PATIENTS);
   const [medicalConsultationsMap, setMedicalConsultationsMap] = useState<Record<string, MedicalConsultation[]>>(INITIAL_MEDICAL_CONSULTATIONS);
   const [pharmacyItemsMap] = useState<Record<string, PharmacyItem[]>>(INITIAL_PHARMACY_ITEMS);
+  const [hospitalTariffsMap, setHospitalTariffsMap] = useState<Record<string, HospitalServiceTariff[]>>(INITIAL_HOSPITAL_TARIFFS);
+  const [hospitalInvoicesMap, setHospitalInvoicesMap] = useState<Record<string, HospitalBillingInvoice[]>>(INITIAL_HOSPITAL_INVOICES);
+  const [hospitalPaymentsMap, setHospitalPaymentsMap] = useState<Record<string, HospitalBillingPayment[]>>(INITIAL_HOSPITAL_PAYMENTS);
 
   // Theology Data Collections (Certificate, Diploma, Higher Diploma, Bachelor of Theology)
   const [theologyProgramsMap, setTheologyProgramsMap] = useState<Record<string, TheologyProgram[]>>(INITIAL_THEOLOGY_PROGRAMS);
   const [theologyStudentsMap, setTheologyStudentsMap] = useState<Record<string, TheologyStudent[]>>(INITIAL_THEOLOGY_STUDENTS);
   const [theologyPracticumLogsMap, setTheologyPracticumLogsMap] = useState<Record<string, MinistryPracticumLog[]>>(INITIAL_THEOLOGY_PRACTICUM_LOGS);
   const [theologyLibraryMap, setTheologyLibraryMap] = useState<Record<string, TheologyLibraryResource[]>>(INITIAL_THEOLOGY_LIBRARY);
+  const [theologyInvoicesMap, setTheologyInvoicesMap] = useState<Record<string, TheologyInvoice[]>>(INITIAL_THEOLOGY_INVOICES);
+  const [theologyPaymentsMap, setTheologyPaymentsMap] = useState<Record<string, TheologyFeePayment[]>>(INITIAL_THEOLOGY_PAYMENTS);
 
   const clearError = () => setError(null);
 
@@ -581,23 +631,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const collegeStudents = useMemo(() => collegeStudentsMap[currentTenantId] || [], [collegeStudentsMap, currentTenantId]);
   const libraryBooks = useMemo(() => libraryBooksMap[currentTenantId] || [], [libraryBooksMap, currentTenantId]);
   const hostelRooms = useMemo(() => hostelRoomsMap[currentTenantId] || [], [hostelRoomsMap, currentTenantId]);
+  const collegeFeeStructures = useMemo(() => collegeFeeStructureMap[currentTenantId] || [], [collegeFeeStructureMap, currentTenantId]);
+  const collegeInvoices = useMemo(() => collegeInvoicesMap[currentTenantId] || [], [collegeInvoicesMap, currentTenantId]);
+  const collegePayments = useMemo(() => collegePaymentsMap[currentTenantId] || [], [collegePaymentsMap, currentTenantId]);
 
   // Retail Getters
   const retailProducts = useMemo(() => retailProductsMap[currentTenantId] || [], [retailProductsMap, currentTenantId]);
   const retailSales = useMemo(() => retailSalesMap[currentTenantId] || [], [retailSalesMap, currentTenantId]);
   const retailSuppliers = useMemo(() => retailSuppliersMap[currentTenantId] || [], [retailSuppliersMap, currentTenantId]);
   const retailCustomers = useMemo(() => retailCustomersMap[currentTenantId] || [], [retailCustomersMap, currentTenantId]);
+  const retailInvoices = useMemo(() => retailInvoicesMap[currentTenantId] || [], [retailInvoicesMap, currentTenantId]);
+  const retailCustomerPayments = useMemo(() => retailCustomerPaymentsMap[currentTenantId] || [], [retailCustomerPaymentsMap, currentTenantId]);
 
   // Hospital Getters
   const hospitalPatients = useMemo(() => hospitalPatientsMap[currentTenantId] || [], [hospitalPatientsMap, currentTenantId]);
   const medicalConsultations = useMemo(() => medicalConsultationsMap[currentTenantId] || [], [medicalConsultationsMap, currentTenantId]);
   const pharmacyItems = useMemo(() => pharmacyItemsMap[currentTenantId] || [], [pharmacyItemsMap, currentTenantId]);
+  const hospitalTariffs = useMemo(() => hospitalTariffsMap[currentTenantId] || [], [hospitalTariffsMap, currentTenantId]);
+  const hospitalInvoices = useMemo(() => hospitalInvoicesMap[currentTenantId] || [], [hospitalInvoicesMap, currentTenantId]);
+  const hospitalPayments = useMemo(() => hospitalPaymentsMap[currentTenantId] || [], [hospitalPaymentsMap, currentTenantId]);
 
   // Theology Getters (Certificate, Diploma, Higher Diploma, Bachelor of Theology)
   const theologyPrograms = useMemo(() => theologyProgramsMap[currentTenantId] || [], [theologyProgramsMap, currentTenantId]);
   const theologyStudents = useMemo(() => theologyStudentsMap[currentTenantId] || [], [theologyStudentsMap, currentTenantId]);
   const theologyPracticumLogs = useMemo(() => theologyPracticumLogsMap[currentTenantId] || [], [theologyPracticumLogsMap, currentTenantId]);
   const theologyLibraryResources = useMemo(() => theologyLibraryMap[currentTenantId] || [], [theologyLibraryMap, currentTenantId]);
+  const theologyInvoices = useMemo(() => theologyInvoicesMap[currentTenantId] || [], [theologyInvoicesMap, currentTenantId]);
+  const theologyPayments = useMemo(() => theologyPaymentsMap[currentTenantId] || [], [theologyPaymentsMap, currentTenantId]);
 
   // Dynamic "Needs Attention" Items calculation
   const needsAttentionItems = useMemo<SystemAttentionItem[]>(() => {
@@ -710,17 +770,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const results: SearchResultItem[] = [];
 
     // Search School Students
-    students.forEach(s => {
+    (students || []).forEach(s => {
       if (
-        s.firstName.toLowerCase().includes(q) ||
-        s.lastName.toLowerCase().includes(q) ||
-        s.admissionNo.toLowerCase().includes(q) ||
-        s.grade.toLowerCase().includes(q)
+        (s.firstName || '').toLowerCase().includes(q) ||
+        (s.lastName || '').toLowerCase().includes(q) ||
+        (s.admissionNo || '').toLowerCase().includes(q) ||
+        (s.grade || '').toLowerCase().includes(q)
       ) {
         results.push({
           id: s.id,
-          title: `${s.firstName} ${s.lastName} (${s.admissionNo})`,
-          subtitle: `${s.grade} ${s.stream} • Balance: KES ${s.feeBalance.toLocaleString()}`,
+          title: `${s.firstName || ''} ${s.lastName || ''} (${s.admissionNo || ''})`,
+          subtitle: `${s.grade || ''} ${s.stream || ''} • Balance: KES ${(s.feeBalance || 0).toLocaleString()}`,
           type: 'STUDENT',
           route: 'school-students',
           metadata: s.admissionNo
@@ -729,16 +789,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Search Staff
-    staff.forEach(st => {
+    (staff || []).forEach(st => {
       if (
-        st.fullName.toLowerCase().includes(q) ||
-        st.email.toLowerCase().includes(q) ||
-        st.designation.toLowerCase().includes(q)
+        (st.fullName || '').toLowerCase().includes(q) ||
+        (st.email || '').toLowerCase().includes(q) ||
+        (st.designation || '').toLowerCase().includes(q)
       ) {
         results.push({
           id: st.id,
           title: st.fullName,
-          subtitle: `${st.designation} • ${st.phone}`,
+          subtitle: `${st.designation || ''} • ${st.phone || ''}`,
           type: 'STAFF',
           route: 'school-staff'
         });
@@ -746,15 +806,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Search Invoices
-    invoices.forEach(inv => {
+    (invoices || []).forEach(inv => {
       if (
-        inv.invoiceNo.toLowerCase().includes(q) ||
-        inv.studentName.toLowerCase().includes(q)
+        (inv.invoiceNo || '').toLowerCase().includes(q) ||
+        (inv.studentName || '').toLowerCase().includes(q)
       ) {
         results.push({
           id: inv.id,
-          title: `Invoice ${inv.invoiceNo} (${inv.studentName})`,
-          subtitle: `Amount: KES ${inv.totalBilled.toLocaleString()} • Status: ${inv.status}`,
+          title: `Invoice ${inv.invoiceNo || ''} (${inv.studentName || ''})`,
+          subtitle: `Amount: KES ${(inv.totalBilled || 0).toLocaleString()} • Status: ${inv.status}`,
           type: 'INVOICE',
           route: 'school-fees'
         });
@@ -762,16 +822,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Search Payments
-    payments.forEach(p => {
+    (payments || []).forEach(p => {
       if (
-        p.receiptNo.toLowerCase().includes(q) ||
-        p.transactionCode.toLowerCase().includes(q) ||
-        p.studentName.toLowerCase().includes(q)
+        (p.receiptNo || '').toLowerCase().includes(q) ||
+        (p.transactionCode || '').toLowerCase().includes(q) ||
+        (p.studentName || '').toLowerCase().includes(q)
       ) {
         results.push({
           id: p.id,
-          title: `Receipt ${p.receiptNo} - ${p.studentName}`,
-          subtitle: `KES ${p.amount.toLocaleString()} via ${p.paymentMethod} (${p.transactionCode})`,
+          title: `Receipt ${p.receiptNo || ''} - ${p.studentName || ''}`,
+          subtitle: `KES ${(p.amount || 0).toLocaleString()} via ${p.paymentMethod || 'CASH'} (${p.transactionCode || ''})`,
           type: 'PAYMENT',
           route: 'school-fees'
         });
@@ -779,11 +839,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Search Retail Products
-    retailProducts.forEach(prod => {
+    (retailProducts || []).forEach(prod => {
       if (
-        prod.name.toLowerCase().includes(q) ||
-        prod.sku.toLowerCase().includes(q) ||
-        prod.category.toLowerCase().includes(q)
+        (prod.name || '').toLowerCase().includes(q) ||
+        (prod.sku || '').toLowerCase().includes(q) ||
+        (prod.category || '').toLowerCase().includes(q)
       ) {
         results.push({
           id: prod.id,
@@ -796,15 +856,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Search College Courses
-    collegeCourses.forEach(c => {
+    (collegeCourses || []).forEach(c => {
       if (
-        c.title.toLowerCase().includes(q) ||
-        c.code.toLowerCase().includes(q)
+        (c.title || '').toLowerCase().includes(q) ||
+        (c.code || '').toLowerCase().includes(q)
       ) {
         results.push({
           id: c.id,
           title: `${c.code}: ${c.title}`,
-          subtitle: `${c.departmentName} • ${c.level}`,
+          subtitle: `${c.departmentName || ''} • ${c.level || ''}`,
           type: 'COURSE',
           route: 'college-courses'
         });
@@ -1301,6 +1361,110 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newBook;
   };
 
+  const addCollegeFeeStructureItem = async (itemData: Omit<CollegeFeeStructureItem, 'id' | 'tenantId'>): Promise<CollegeFeeStructureItem> => {
+    if (!tenant) throw new Error("No active tenant");
+    const newItem: CollegeFeeStructureItem = {
+      ...itemData,
+      id: `cfee-${Date.now()}`,
+      tenantId: tenant.id
+    };
+    setCollegeFeeStructureMap(prev => ({
+      ...prev,
+      [tenant.id]: [...(prev[tenant.id] || []), newItem]
+    }));
+    logAuditEvent('COLLEGE_FEE_STRUCTURE_ADDED', `Added college fee item: ${newItem.courseName} - ${newItem.level} (KES ${newItem.totalSemesterFee.toLocaleString()})`, 'FINANCE');
+    return newItem;
+  };
+
+  const generateCollegeInvoice = async (invoiceData: Omit<CollegeInvoice, 'id' | 'tenantId' | 'invoiceNo' | 'createdAt'>): Promise<CollegeInvoice> => {
+    if (!tenant) throw new Error("No active tenant");
+    const invoiceNo = `C-INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newInvoice: CollegeInvoice = {
+      ...invoiceData,
+      id: `cinv-${Date.now()}`,
+      tenantId: tenant.id,
+      invoiceNo,
+      createdAt: new Date().toISOString(),
+      status: invoiceData.paidAmount >= invoiceData.totalAmount ? 'PAID' : invoiceData.paidAmount > 0 ? 'PARTIAL' : 'UNPAID',
+      balance: Math.max(0, invoiceData.totalAmount - (invoiceData.paidAmount || 0))
+    };
+
+    setCollegeInvoicesMap(prev => ({
+      ...prev,
+      [tenant.id]: [newInvoice, ...(prev[tenant.id] || [])]
+    }));
+
+    setCollegeStudentsMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(s => {
+        if (s.id === invoiceData.studentId) {
+          return {
+            ...s,
+            totalBilled: s.totalBilled + invoiceData.totalAmount,
+            feeBalance: s.feeBalance + invoiceData.totalAmount
+          };
+        }
+        return s;
+      })
+    }));
+
+    logAuditEvent('COLLEGE_INVOICE_GENERATED', `Generated college invoice ${invoiceNo} for ${invoiceData.studentName} (KES ${invoiceData.totalAmount.toLocaleString()})`, 'FINANCE');
+    return newInvoice;
+  };
+
+  const recordCollegePayment = async (paymentData: Omit<CollegePayment, 'id' | 'tenantId' | 'receiptNo' | 'status'>): Promise<CollegePayment> => {
+    if (!tenant) throw new Error("No active tenant");
+    const receiptNo = `C-REC-${Date.now().toString().slice(-6)}`;
+    const newPayment: CollegePayment = {
+      ...paymentData,
+      id: `cpay-${Date.now()}`,
+      tenantId: tenant.id,
+      receiptNo,
+      status: 'COMPLETED'
+    };
+
+    setCollegePaymentsMap(prev => ({
+      ...prev,
+      [tenant.id]: [newPayment, ...(prev[tenant.id] || [])]
+    }));
+
+    setCollegeStudentsMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(s => {
+        if (s.id === paymentData.studentId) {
+          return {
+            ...s,
+            totalPaid: s.totalPaid + paymentData.amount,
+            feeBalance: Math.max(0, s.feeBalance - paymentData.amount)
+          };
+        }
+        return s;
+      })
+    }));
+
+    if (paymentData.invoiceId) {
+      setCollegeInvoicesMap(prev => ({
+        ...prev,
+        [tenant.id]: (prev[tenant.id] || []).map(inv => {
+          if (inv.id === paymentData.invoiceId) {
+            const newPaid = inv.paidAmount + paymentData.amount;
+            const newBalance = Math.max(0, inv.totalAmount - newPaid);
+            return {
+              ...inv,
+              paidAmount: newPaid,
+              balance: newBalance,
+              status: newBalance === 0 ? 'PAID' : 'PARTIAL'
+            };
+          }
+          return inv;
+        })
+      }));
+    }
+
+    logAuditEvent('COLLEGE_PAYMENT_RECORDED', `Recorded college fee payment ${receiptNo} of KES ${paymentData.amount.toLocaleString()} for ${paymentData.studentName}`, 'FINANCE');
+    return newPayment;
+  };
+
   // THEOLOGY ACTIONS (Certificate, Diploma, Higher Diploma, Bachelor of Theology)
   const addTheologyProgram = async (programData: Omit<TheologyProgram, 'id' | 'tenantId' | 'enrolledStudentsCount'>): Promise<TheologyProgram> => {
     if (!tenant) throw new Error("No active tenant");
@@ -1439,6 +1603,103 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newResource;
   };
 
+  const generateTheologyInvoice = async (invoiceData: Omit<TheologyInvoice, 'id' | 'tenantId' | 'invoiceNo' | 'createdAt'>): Promise<TheologyInvoice> => {
+    if (!tenant) throw new Error("No active tenant");
+    const invoiceNo = `TH-INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const totalAmount = invoiceData.totalAmount || (Number(invoiceData.tuitionAmount || 0) + Number(invoiceData.practicumFee || 0) + Number(invoiceData.ordinationLevy || 0) - Number(invoiceData.sponsorDiscountOrBursary || 0));
+    const paidAmount = invoiceData.paidAmount || invoiceData.totalPaid || 0;
+    const balance = Math.max(0, totalAmount - paidAmount);
+    const newInvoice: TheologyInvoice = {
+      ...invoiceData,
+      id: `thinv-${Date.now()}`,
+      tenantId: tenant.id,
+      invoiceNo,
+      totalAmount,
+      paidAmount,
+      totalBilled: totalAmount,
+      totalPaid: paidAmount,
+      balance,
+      createdAt: new Date().toISOString(),
+      status: paidAmount >= totalAmount ? 'PAID' : paidAmount > 0 ? 'PARTIAL' : 'UNPAID'
+    };
+
+    setTheologyInvoicesMap(prev => ({
+      ...prev,
+      [tenant.id]: [newInvoice, ...(prev[tenant.id] || [])]
+    }));
+
+    setTheologyStudentsMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(s => {
+        if (s.id === invoiceData.studentId) {
+          return {
+            ...s,
+            totalBilled: s.totalBilled + totalAmount,
+            feeBalance: s.feeBalance + totalAmount
+          };
+        }
+        return s;
+      })
+    }));
+
+    logAuditEvent('THEOLOGY_INVOICE_GENERATED', `Generated seminary invoice ${invoiceNo} for ${invoiceData.studentName} (KES ${totalAmount.toLocaleString()})`, 'FINANCE');
+    return newInvoice;
+  };
+
+  const recordTheologyPayment = async (paymentData: Omit<TheologyFeePayment, 'id' | 'tenantId' | 'receiptNo' | 'status'>): Promise<TheologyFeePayment> => {
+    if (!tenant) throw new Error("No active tenant");
+    const receiptNo = `TH-REC-${Date.now().toString().slice(-6)}`;
+    const newPayment: TheologyFeePayment = {
+      ...paymentData,
+      id: `thpay-${Date.now()}`,
+      tenantId: tenant.id,
+      receiptNo,
+      status: 'COMPLETED'
+    };
+
+    setTheologyPaymentsMap(prev => ({
+      ...prev,
+      [tenant.id]: [newPayment, ...(prev[tenant.id] || [])]
+    }));
+
+    setTheologyStudentsMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(s => {
+        if (s.id === paymentData.studentId) {
+          return {
+            ...s,
+            totalPaid: s.totalPaid + paymentData.amount,
+            feeBalance: Math.max(0, s.feeBalance - paymentData.amount)
+          };
+        }
+        return s;
+      })
+    }));
+
+    if (paymentData.invoiceId) {
+      setTheologyInvoicesMap(prev => ({
+        ...prev,
+        [tenant.id]: (prev[tenant.id] || []).map(inv => {
+          if (inv.id === paymentData.invoiceId) {
+            const newPaid = (inv.paidAmount || 0) + paymentData.amount;
+            const newBalance = Math.max(0, (inv.totalAmount || 0) - newPaid);
+            return {
+              ...inv,
+              paidAmount: newPaid,
+              totalPaid: newPaid,
+              balance: newBalance,
+              status: newBalance === 0 ? 'PAID' : 'PARTIAL'
+            };
+          }
+          return inv;
+        })
+      }));
+    }
+
+    logAuditEvent('THEOLOGY_PAYMENT_RECORDED', `Recorded seminary payment ${receiptNo} for ${paymentData.studentName} (KES ${paymentData.amount.toLocaleString()}) [${paymentData.sponsorName || paymentData.sponsorshipType || paymentData.paymentMethod}]`, 'FINANCE');
+    return newPayment;
+  };
+
   // RETAIL ACTIONS
   const recordRetailSale = async (saleData: Omit<RetailSale, 'id' | 'tenantId' | 'receiptNumber' | 'createdAt' | 'status'>): Promise<RetailSale> => {
     if (!tenant) throw new Error("No active tenant");
@@ -1538,6 +1799,100 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newCustomer;
   };
 
+  const createRetailCustomerInvoice = async (invoiceData: Omit<RetailCustomerInvoice, 'id' | 'tenantId' | 'invoiceNo' | 'issueDate'>): Promise<RetailCustomerInvoice> => {
+    if (!tenant) throw new Error("No active tenant");
+    const invoiceNo = `R-INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const paidAmount = invoiceData.paidAmount || invoiceData.amountPaid || 0;
+    const balance = Math.max(0, invoiceData.totalAmount - paidAmount);
+    const newInvoice: RetailCustomerInvoice = {
+      ...invoiceData,
+      id: `rinv-${Date.now()}`,
+      tenantId: tenant.id,
+      invoiceNo,
+      issueDate: new Date().toISOString().split('T')[0],
+      amountPaid: paidAmount,
+      paidAmount,
+      balanceDue: balance,
+      balance,
+      status: paidAmount >= invoiceData.totalAmount ? 'PAID' : paidAmount > 0 ? 'PARTIAL' : 'UNPAID'
+    };
+
+    setRetailInvoicesMap(prev => ({
+      ...prev,
+      [tenant.id]: [newInvoice, ...(prev[tenant.id] || [])]
+    }));
+
+    setRetailCustomersMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(c => {
+        if (c.id === invoiceData.customerId) {
+          return {
+            ...c,
+            currentCredit: c.currentCredit + balance,
+            totalSpend: c.totalSpend + invoiceData.totalAmount,
+            lastPurchaseDate: newInvoice.issueDate
+          };
+        }
+        return c;
+      })
+    }));
+
+    logAuditEvent('RETAIL_INVOICE_CREATED', `Created customer invoice ${invoiceNo} for ${invoiceData.customerName} (KES ${invoiceData.totalAmount.toLocaleString()})`, 'FINANCE');
+    return newInvoice;
+  };
+
+  const recordRetailCustomerPayment = async (paymentData: Omit<RetailCustomerPayment, 'id' | 'tenantId' | 'receiptNo' | 'status'>): Promise<RetailCustomerPayment> => {
+    if (!tenant) throw new Error("No active tenant");
+    const receiptNo = `R-REC-${Date.now().toString().slice(-6)}`;
+    const newPayment: RetailCustomerPayment = {
+      ...paymentData,
+      id: `rpay-${Date.now()}`,
+      tenantId: tenant.id,
+      receiptNo,
+      status: 'COMPLETED'
+    };
+
+    setRetailCustomerPaymentsMap(prev => ({
+      ...prev,
+      [tenant.id]: [newPayment, ...(prev[tenant.id] || [])]
+    }));
+
+    if (paymentData.invoiceId) {
+      setRetailInvoicesMap(prev => ({
+        ...prev,
+        [tenant.id]: (prev[tenant.id] || []).map(inv => {
+          if (inv.id === paymentData.invoiceId) {
+            const newPaid = inv.paidAmount + paymentData.amount;
+            const newBalance = Math.max(0, inv.totalAmount - newPaid);
+            return {
+              ...inv,
+              paidAmount: newPaid,
+              balance: newBalance,
+              status: newBalance === 0 ? 'PAID' : 'PARTIAL'
+            };
+          }
+          return inv;
+        })
+      }));
+    }
+
+    setRetailCustomersMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(c => {
+        if (c.id === paymentData.customerId) {
+          return {
+            ...c,
+            currentCredit: Math.max(0, c.currentCredit - paymentData.amount)
+          };
+        }
+        return c;
+      })
+    }));
+
+    logAuditEvent('RETAIL_DEBTOR_PAYMENT_RECORDED', `Recorded debtor settlement ${receiptNo} of KES ${paymentData.amount.toLocaleString()} from ${paymentData.customerName}`, 'FINANCE');
+    return newPayment;
+  };
+
   // HOSPITAL ACTIONS
   const admitHospitalPatient = async (patientData: Omit<HospitalPatient, 'id' | 'tenantId' | 'lastVisitDate' | 'status'>): Promise<HospitalPatient> => {
     if (!tenant) throw new Error("No active tenant");
@@ -1570,6 +1925,96 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       [tenant.id]: [newConsultation, ...(prev[tenant.id] || [])]
     }));
     return newConsultation;
+  };
+
+  const createHospitalInvoice = async (invoiceData: Omit<HospitalBillingInvoice, 'id' | 'tenantId' | 'invoiceNo' | 'invoiceDate'>): Promise<HospitalBillingInvoice> => {
+    if (!tenant) throw new Error("No active tenant");
+    const invoiceNo = `H-INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const total = invoiceData.patientPayableAmount || invoiceData.subtotal || invoiceData.totalAmount || 0;
+    const paidAmount = invoiceData.paidAmount || 0;
+    const balance = Math.max(0, total - paidAmount);
+    const newInvoice: HospitalBillingInvoice = {
+      ...invoiceData,
+      id: `hinv-${Date.now()}`,
+      tenantId: tenant.id,
+      invoiceNo,
+      totalAmount: total,
+      paidAmount,
+      balance,
+      invoiceDate: new Date().toISOString().split('T')[0],
+      status: paidAmount >= total ? 'PAID' : paidAmount > 0 ? 'PARTIAL' : 'UNPAID'
+    };
+
+    setHospitalInvoicesMap(prev => ({
+      ...prev,
+      [tenant.id]: [newInvoice, ...(prev[tenant.id] || [])]
+    }));
+
+    setHospitalPatientsMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(p => {
+        if (p.id === invoiceData.patientId) {
+          return { ...p, status: 'DISCHARGED' };
+        }
+        return p;
+      })
+    }));
+
+    logAuditEvent('HOSPITAL_INVOICE_CREATED', `Generated hospital billing invoice ${invoiceNo} for patient ${invoiceData.patientName} (KES ${total.toLocaleString()})`, 'FINANCE');
+    return newInvoice;
+  };
+
+  const recordHospitalPayment = async (paymentData: Omit<HospitalBillingPayment, 'id' | 'tenantId' | 'receiptNo' | 'status'>): Promise<HospitalBillingPayment> => {
+    if (!tenant) throw new Error("No active tenant");
+    const receiptNo = `H-REC-${Date.now().toString().slice(-6)}`;
+    const newPayment: HospitalBillingPayment = {
+      ...paymentData,
+      id: `hpay-${Date.now()}`,
+      tenantId: tenant.id,
+      receiptNo,
+      status: 'COMPLETED'
+    };
+
+    setHospitalPaymentsMap(prev => ({
+      ...prev,
+      [tenant.id]: [newPayment, ...(prev[tenant.id] || [])]
+    }));
+
+    setHospitalInvoicesMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).map(inv => {
+        if (inv.id === paymentData.invoiceId) {
+          const newPaid = inv.paidAmount + paymentData.amount;
+          const invoiceTotal = inv.patientPayableAmount || inv.totalAmount || inv.subtotal;
+          const newBalance = Math.max(0, invoiceTotal - newPaid);
+          return {
+            ...inv,
+            paidAmount: newPaid,
+            balance: newBalance,
+            status: newBalance === 0 ? 'PAID' : 'PARTIAL'
+          };
+        }
+        return inv;
+      })
+    }));
+
+    logAuditEvent('HOSPITAL_PAYMENT_RECORDED', `Received medical payment ${receiptNo} of KES ${paymentData.amount.toLocaleString()} for patient ${paymentData.patientName} (${paymentData.paymentMethod})`, 'FINANCE');
+    return newPayment;
+  };
+
+  const addHospitalTariff = async (tariffData: Omit<HospitalServiceTariff, 'id' | 'tenantId'>): Promise<HospitalServiceTariff> => {
+    if (!tenant) throw new Error("No active tenant");
+    const newTariff: HospitalServiceTariff = {
+      ...tariffData,
+      id: `htrf-${Date.now()}`,
+      tenantId: tenant.id
+    };
+    setHospitalTariffsMap(prev => ({
+      ...prev,
+      [tenant.id]: [...(prev[tenant.id] || []), newTariff]
+    }));
+    logAuditEvent('HOSPITAL_TARIFF_ADDED', `Added clinical tariff ${newTariff.name} (${newTariff.category}) - KES ${(newTariff.cashPrice || newTariff.standardPrice).toLocaleString()}`);
+    return newTariff;
   };
 
   // PERMISSION HELPERS
@@ -1821,17 +2266,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         collegeStudents,
         libraryBooks,
         hostelRooms,
+        collegeFeeStructures,
+        collegeInvoices,
+        collegePayments,
         retailProducts,
         retailSales,
         retailSuppliers,
         retailCustomers,
+        retailInvoices,
+        retailCustomerPayments,
         hospitalPatients,
         medicalConsultations,
         pharmacyItems,
+        hospitalTariffs,
+        hospitalInvoices,
+        hospitalPayments,
         theologyPrograms,
         theologyStudents,
         theologyPracticumLogs,
         theologyLibraryResources,
+        theologyInvoices,
+        theologyPayments,
         needsAttentionItems,
         searchCurrentTenant,
         admitStudent,
@@ -1859,6 +2314,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addCollegeDepartment,
         admitCollegeStudent,
         addLibraryBook,
+        addCollegeFeeStructureItem,
+        generateCollegeInvoice,
+        recordCollegePayment,
         addTheologyProgram,
         updateTheologyProgram,
         admitTheologyStudent,
@@ -1866,13 +2324,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         recordMinistryPracticumLog,
         verifyMinistryPracticumLog,
         addTheologyLibraryResource,
+        generateTheologyInvoice,
+        recordTheologyPayment,
         recordRetailSale,
         addRetailProduct,
         updateProductStock,
         addRetailSupplier,
         addRetailCustomer,
+        createRetailCustomerInvoice,
+        recordRetailCustomerPayment,
         admitHospitalPatient,
         recordMedicalConsultation,
+        createHospitalInvoice,
+        recordHospitalPayment,
+        addHospitalTariff,
         canAccessModule,
         hasRole,
         hasPermission,

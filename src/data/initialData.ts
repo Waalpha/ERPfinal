@@ -32,7 +32,17 @@ import {
   TheologyUnit,
   TheologyStudent,
   MinistryPracticumLog,
-  TheologyLibraryResource
+  TheologyLibraryResource,
+  CollegeFeeStructureItem,
+  CollegeInvoice,
+  CollegePayment,
+  TheologyFeePayment,
+  TheologyInvoice,
+  HospitalBillingInvoice,
+  HospitalBillingPayment,
+  HospitalServiceTariff,
+  RetailCustomerInvoice,
+  RetailCustomerPayment
 } from '../types';
 
 export const INITIAL_TENANTS: Tenant[] = [
@@ -2410,6 +2420,416 @@ export const INITIAL_THEOLOGY_LIBRARY: Record<string, TheologyLibraryResource[]>
       shelfLocation: 'Reference Desk R-04',
       digitalPdfAvailable: true,
       status: 'AVAILABLE'
+    }
+  ]
+};
+
+// ==========================================
+// COLLEGE FEE STRUCTURES & FINANCIAL LEDGER
+// ==========================================
+export const INITIAL_COLLEGE_FEE_STRUCTURE: Record<string, CollegeFeeStructureItem[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'cfs-01',
+      tenantId: 'tenant-berea-theology',
+      courseId: 'course-bth',
+      courseName: 'Bachelor of Theology (B.Th)',
+      level: 'DEGREE',
+      yearOfStudy: 1,
+      semester: 1,
+      academicYear: '2024/2025',
+      tuitionFee: 45000,
+      labAndPracticalFee: 5000,
+      libraryFee: 3000,
+      studentActivityFee: 2000,
+      examRegistrationFee: 3000,
+      medicalCoverFee: 2000,
+      hostelFee: 15000,
+      totalSemesterFee: 75000
+    },
+    {
+      id: 'cfs-02',
+      tenantId: 'tenant-berea-theology',
+      courseId: 'course-dip-theo',
+      courseName: 'Diploma in Pastoral Theology & Ministry',
+      level: 'DIPLOMA',
+      yearOfStudy: 1,
+      semester: 1,
+      academicYear: '2024/2025',
+      tuitionFee: 32000,
+      labAndPracticalFee: 3000,
+      libraryFee: 2500,
+      studentActivityFee: 1500,
+      examRegistrationFee: 2000,
+      medicalCoverFee: 1500,
+      hostelFee: 12000,
+      totalSemesterFee: 54500
+    }
+  ]
+};
+
+export const INITIAL_COLLEGE_INVOICES: Record<string, CollegeInvoice[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'cinv-01',
+      tenantId: 'tenant-berea-theology',
+      invoiceNo: 'INV-COL-2025-001',
+      studentId: 'cstud-01',
+      studentName: 'David Kiprono Cheruiyot',
+      studentRegNo: 'BTH/2022/014',
+      courseName: 'Bachelor of Theology (B.Th)',
+      yearOfStudy: 3,
+      semester: 1,
+      academicYear: '2024/2025',
+      items: [
+        { description: 'Semester 1 Tuition', amount: 45000 },
+        { description: 'Hebrew Exegesis Practical Lab', amount: 5000 },
+        { description: 'Divinity Library Access', amount: 3000 },
+        { description: 'Hostel Accommodation (Jerusalem Hall)', amount: 15000 }
+      ],
+      totalAmount: 68000,
+      paidAmount: 53000,
+      balance: 15000,
+      dueDate: '2025-03-31',
+      status: 'PARTIAL',
+      createdAt: '2025-01-15'
+    },
+    {
+      id: 'cinv-02',
+      tenantId: 'tenant-berea-theology',
+      invoiceNo: 'INV-COL-2025-002',
+      studentId: 'cstud-02',
+      studentName: 'Grace Wambui Njoroge',
+      studentRegNo: 'DIP/2023/048',
+      courseName: 'Diploma in Pastoral Theology & Ministry',
+      yearOfStudy: 2,
+      semester: 1,
+      academicYear: '2024/2025',
+      items: [
+        { description: 'Semester 1 Tuition', amount: 32000 },
+        { description: 'Homiletics Preaching Practicum', amount: 3000 },
+        { description: 'Library & Online Journals', amount: 2500 },
+        { description: 'Examination Registration', amount: 2000 }
+      ],
+      totalAmount: 39500,
+      paidAmount: 39500,
+      balance: 0,
+      dueDate: '2025-03-31',
+      status: 'PAID',
+      createdAt: '2025-01-15'
+    }
+  ]
+};
+
+export const INITIAL_COLLEGE_PAYMENTS: Record<string, CollegePayment[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'cpay-01',
+      tenantId: 'tenant-berea-theology',
+      receiptNo: 'REC-COL-8921',
+      studentId: 'cstud-01',
+      studentName: 'David Kiprono Cheruiyot',
+      studentRegNo: 'BTH/2022/014',
+      courseName: 'Bachelor of Theology (B.Th)',
+      amount: 35000,
+      paymentMethod: 'MPESA',
+      transactionCode: 'SJK8294N10',
+      paymentDate: '2025-01-20',
+      academicYear: '2024/2025',
+      semester: 1,
+      recordedBy: 'Finance Dean',
+      notes: 'Initial deposit via M-Pesa Paybill 400200',
+      status: 'COMPLETED'
+    },
+    {
+      id: 'cpay-02',
+      tenantId: 'tenant-berea-theology',
+      receiptNo: 'REC-COL-8922',
+      studentId: 'cstud-01',
+      studentName: 'David Kiprono Cheruiyot',
+      studentRegNo: 'BTH/2022/014',
+      courseName: 'Bachelor of Theology (B.Th)',
+      amount: 18000,
+      paymentMethod: 'HELB_LOAN',
+      transactionCode: 'HELB-2025-BATCH01',
+      paymentDate: '2025-02-10',
+      academicYear: '2024/2025',
+      semester: 1,
+      recordedBy: 'Accounts Office',
+      notes: 'HELB direct loan disbursement',
+      status: 'COMPLETED'
+    },
+    {
+      id: 'cpay-03',
+      tenantId: 'tenant-berea-theology',
+      receiptNo: 'REC-COL-8923',
+      studentId: 'cstud-02',
+      studentName: 'Grace Wambui Njoroge',
+      studentRegNo: 'DIP/2023/048',
+      courseName: 'Diploma in Pastoral Theology & Ministry',
+      amount: 39500,
+      paymentMethod: 'BANK_TRANSFER',
+      transactionCode: 'KCB-TR-771890',
+      bankName: 'KCB Bank Kenya',
+      paymentDate: '2025-01-18',
+      academicYear: '2024/2025',
+      semester: 1,
+      recordedBy: 'Cashier Desk',
+      notes: 'Direct bank slip deposit',
+      status: 'COMPLETED'
+    }
+  ]
+};
+
+// ==========================================
+// THEOLOGY & DIVINITY SEMINARY FEES
+// ==========================================
+export const INITIAL_THEOLOGY_INVOICES: Record<string, TheologyInvoice[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'tinv-01',
+      tenantId: 'tenant-berea-theology',
+      invoiceNo: 'T-INV-2025-001',
+      invoiceNumber: 'T-INV-2025-001',
+      studentId: 'tstud-01',
+      studentName: 'Pastor Elijah Mutua Kivuva',
+      studentRegNo: 'SPT/BTH/2022/001',
+      programTitle: 'Bachelor of Theology (B.Th)',
+      yearOfStudy: 3,
+      semester: 1,
+      academicYear: '2024/2025',
+      tuitionAmount: 48000,
+      practicumFee: 6000,
+      ordinationLevy: 8000,
+      sponsorDiscountOrBursary: 20000,
+      totalAmount: 42000,
+      paidAmount: 32000,
+      totalBilled: 42000,
+      totalPaid: 32000,
+      balance: 10000,
+      dueDate: '2025-03-25',
+      status: 'PARTIAL',
+      createdAt: '2025-01-10'
+    },
+    {
+      id: 'tinv-02',
+      tenantId: 'tenant-berea-theology',
+      invoiceNo: 'T-INV-2025-002',
+      invoiceNumber: 'T-INV-2025-002',
+      studentId: 'tstud-02',
+      studentName: 'Rev. Sister Mary Christine Achieng',
+      studentRegNo: 'SPT/DIP/2023/015',
+      programTitle: 'Diploma in Pastoral Ministry & Biblical Studies',
+      yearOfStudy: 2,
+      semester: 1,
+      academicYear: '2024/2025',
+      tuitionAmount: 32000,
+      practicumFee: 4000,
+      ordinationLevy: 0,
+      sponsorDiscountOrBursary: 36000,
+      totalAmount: 0,
+      paidAmount: 0,
+      totalBilled: 0,
+      totalPaid: 0,
+      balance: 0,
+      dueDate: '2025-03-25',
+      status: 'PAID',
+      createdAt: '2025-01-10'
+    }
+  ]
+};
+
+export const INITIAL_THEOLOGY_PAYMENTS: Record<string, TheologyFeePayment[]> = {
+  'tenant-berea-theology': [
+    {
+      id: 'tpay-01',
+      tenantId: 'tenant-berea-theology',
+      receiptNo: 'T-REC-1049',
+      studentId: 'tstud-01',
+      studentName: 'Pastor Elijah Mutua Kivuva',
+      studentRegNo: 'SPT/BTH/2022/001',
+      programTitle: 'Bachelor of Theology (B.Th)',
+      amount: 20000,
+      paymentMethod: 'PARISH_SPONSORSHIP',
+      transactionCode: 'AIC-MACHAKOS-CHQ881',
+      sponsorOrDiocese: 'AIC Machakos Area Church Council',
+      paymentCategory: 'TUITION',
+      paymentDate: '2025-01-12',
+      recordedBy: 'Seminary Bursar',
+      notes: 'Parish sponsorship check for term 1',
+      status: 'COMPLETED'
+    },
+    {
+      id: 'tpay-02',
+      tenantId: 'tenant-berea-theology',
+      receiptNo: 'T-REC-1050',
+      studentId: 'tstud-01',
+      studentName: 'Pastor Elijah Mutua Kivuva',
+      studentRegNo: 'SPT/BTH/2022/001',
+      programTitle: 'Bachelor of Theology (B.Th)',
+      amount: 12000,
+      paymentMethod: 'MPESA',
+      transactionCode: 'QKA81920L9',
+      paymentCategory: 'ORDINATION_ROBES_VESTMENT',
+      paymentDate: '2025-02-05',
+      recordedBy: 'Registrar',
+      notes: 'Ordination candidate stole & gown levy',
+      status: 'COMPLETED'
+    }
+  ]
+};
+
+// ==========================================
+// HOSPITAL & HEALTHCARE BILLING
+// ==========================================
+export const INITIAL_HOSPITAL_TARIFFS: Record<string, HospitalServiceTariff[]> = {
+  'tenant-st-austins': [
+    { id: 'tar-01', tenantId: 'tenant-st-austins', code: 'CON-GP', name: 'General Practitioner Doctor Consultation', category: 'CONSULTATION', standardPrice: 1500, insurancePrice: 2000, department: 'Outpatient' },
+    { id: 'tar-02', tenantId: 'tenant-st-austins', code: 'CON-SPEC', name: 'Specialist Physician Consultation', category: 'CONSULTATION', standardPrice: 3500, insurancePrice: 4500, department: 'Specialized Clinic' },
+    { id: 'tar-03', tenantId: 'tenant-st-austins', code: 'LAB-CBC', name: 'Full Blood Count (FBC / CBC)', category: 'LABORATORY', standardPrice: 1200, insurancePrice: 1500, department: 'Pathology Lab' },
+    { id: 'tar-04', tenantId: 'tenant-st-austins', code: 'LAB-MAL', name: 'Malaria Rapid Diagnostic Test (mRDT)', category: 'LABORATORY', standardPrice: 600, insurancePrice: 800, department: 'Microbiology' },
+    { id: 'tar-05', tenantId: 'tenant-st-austins', code: 'RAD-XRAY', name: 'Chest X-Ray (PA & Lateral)', category: 'RADIOLOGY', standardPrice: 2500, insurancePrice: 3000, department: 'Imaging' },
+    { id: 'tar-06', tenantId: 'tenant-st-austins', code: 'BED-GEN', name: 'General Ward Inpatient Bed / Night', category: 'WARD_BED', standardPrice: 2800, insurancePrice: 3500, department: 'Inpatient Nursing' }
+  ]
+};
+
+export const INITIAL_HOSPITAL_INVOICES: Record<string, HospitalBillingInvoice[]> = {
+  'tenant-st-austins': [
+    {
+      id: 'hinv-01',
+      tenantId: 'tenant-st-austins',
+      invoiceNo: 'H-INV-2025-0101',
+      patientId: 'pat-01',
+      patientName: 'Grace Achieng Otieno',
+      patientNo: 'PAT-2025-01',
+      patientPhone: '0712345678',
+      billingType: 'OUTPATIENT',
+      items: [
+        { id: 'item-1', description: 'Doctor Consultation (GP)', category: 'CONSULTATION', quantity: 1, unitPrice: 1500, total: 1500 },
+        { id: 'item-2', description: 'Full Blood Count (CBC)', category: 'LABORATORY', quantity: 1, unitPrice: 1200, total: 1200 },
+        { id: 'item-3', description: 'Amoxicillin 500mg (20 Caps)', category: 'PHARMACY', quantity: 1, unitPrice: 800, total: 800 }
+      ],
+      subtotal: 3500,
+      nhifOrInsuranceCovered: 2500,
+      insuranceProvider: 'NHIF / SHA Civil Servants Scheme',
+      insurancePolicyOrClaimNo: 'SHA-CLAIM-88910',
+      patientPayableAmount: 1000,
+      paidAmount: 1000,
+      balance: 0,
+      status: 'PAID',
+      invoiceDate: '2025-02-15',
+      doctorName: 'Dr. Sarah Kamau, MD'
+    },
+    {
+      id: 'hinv-02',
+      tenantId: 'tenant-st-austins',
+      invoiceNo: 'H-INV-2025-0102',
+      patientId: 'pat-02',
+      patientName: 'Samuel Maina Mwangi',
+      patientNo: 'PAT-2025-02',
+      patientPhone: '0722998877',
+      billingType: 'OUTPATIENT',
+      items: [
+        { id: 'item-4', description: 'Emergency Triage & Consultation', category: 'CONSULTATION', quantity: 1, unitPrice: 2000, total: 2000 },
+        { id: 'item-5', description: 'Wound Dressing & Suturing Kit', category: 'PROCEDURE', quantity: 1, unitPrice: 3500, total: 3500 },
+        { id: 'item-6', description: 'Tetanus Toxoid Vaccine & Antibiotics', category: 'PHARMACY', quantity: 1, unitPrice: 1500, total: 1500 }
+      ],
+      subtotal: 7000,
+      nhifOrInsuranceCovered: 0,
+      patientPayableAmount: 7000,
+      paidAmount: 4000,
+      balance: 3000,
+      status: 'PARTIAL',
+      invoiceDate: '2025-02-20',
+      doctorName: 'Dr. Patrick Odhiambo'
+    }
+  ]
+};
+
+export const INITIAL_HOSPITAL_PAYMENTS: Record<string, HospitalBillingPayment[]> = {
+  'tenant-st-austins': [
+    {
+      id: 'hpay-01',
+      tenantId: 'tenant-st-austins',
+      receiptNo: 'H-REC-5001',
+      invoiceId: 'hinv-01',
+      patientId: 'pat-01',
+      patientName: 'Grace Achieng Otieno',
+      patientNo: 'PAT-2025-01',
+      amount: 1000,
+      paymentMethod: 'MPESA',
+      transactionCode: 'RK8192A01X',
+      paymentDate: '2025-02-15',
+      cashierName: 'Hospital Cashier Desk 1',
+      notes: 'Outpatient copay settlement',
+      status: 'COMPLETED'
+    },
+    {
+      id: 'hpay-02',
+      tenantId: 'tenant-st-austins',
+      receiptNo: 'H-REC-5002',
+      invoiceId: 'hinv-02',
+      patientId: 'pat-02',
+      patientName: 'Samuel Maina Mwangi',
+      patientNo: 'PAT-2025-02',
+      amount: 4000,
+      paymentMethod: 'CASH',
+      transactionCode: 'CASH-REC-0028',
+      paymentDate: '2025-02-20',
+      cashierName: 'Emergency Triage Cashier',
+      notes: 'Partial emergency procedure deposit',
+      status: 'COMPLETED'
+    }
+  ]
+};
+
+// ==========================================
+// RETAIL INVOICES & CUSTOMER DEBTOR PAYMENTS
+// ==========================================
+export const INITIAL_RETAIL_INVOICES: Record<string, RetailCustomerInvoice[]> = {
+  'tenant-st-austins': [
+    {
+      id: 'rinv-01',
+      tenantId: 'tenant-st-austins',
+      invoiceNo: 'R-INV-2025-001',
+      customerId: 'cust-01',
+      customerName: 'Mama Lucy Wholesalers',
+      customerPhone: '0711223344',
+      customerType: 'WHOLESALE',
+      items: [
+        { productId: 'prod-01', productName: 'Maize Flour 2kg Pack (Bundle of 12)', sku: 'SKU-MZ-01', quantity: 10, unitPrice: 2200, discount: 500, lineTotal: 21500 },
+        { productId: 'prod-02', productName: 'Pure Cooking Oil 5L Can', sku: 'SKU-OIL-05', quantity: 5, unitPrice: 1450, discount: 0, lineTotal: 7250 }
+      ],
+      subtotal: 28750,
+      taxAmount: 4600,
+      discountAmount: 500,
+      totalAmount: 32850,
+      amountPaid: 20000,
+      balanceDue: 12850,
+      paymentTerms: 'NET_30',
+      dueDate: '2025-03-15',
+      issueDate: '2025-02-15',
+      status: 'PARTIAL'
+    }
+  ]
+};
+
+export const INITIAL_RETAIL_PAYMENTS: Record<string, RetailCustomerPayment[]> = {
+  'tenant-st-austins': [
+    {
+      id: 'rpay-01',
+      tenantId: 'tenant-st-austins',
+      receiptNo: 'R-REC-7001',
+      customerId: 'cust-01',
+      customerName: 'Mama Lucy Wholesalers',
+      invoiceId: 'rinv-01',
+      amount: 20000,
+      paymentMethod: 'MPESA',
+      transactionCode: 'TKA8892019',
+      paymentDate: '2025-02-18',
+      receivedBy: 'Store Manager',
+      notes: 'Partial payment on invoice R-INV-2025-001',
+      status: 'COMPLETED'
     }
   ]
 };

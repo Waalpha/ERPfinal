@@ -498,6 +498,70 @@ export interface HostelRoom {
 }
 
 // ==========================================
+// COLLEGE FEES & TUITION BILLING TYPES
+// ==========================================
+export interface CollegeFeeStructureItem {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  courseName: string;
+  level: 'CERTIFICATE' | 'DIPLOMA' | 'DEGREE' | 'MASTERS';
+  yearOfStudy: number;
+  semester: 1 | 2 | 3;
+  academicYear: string;
+  tuitionFee: number;
+  labAndPracticalFee: number;
+  libraryFee: number;
+  studentActivityFee: number;
+  examRegistrationFee: number;
+  medicalCoverFee: number;
+  hostelFee?: number;
+  totalSemesterFee: number;
+}
+
+export interface CollegeInvoice {
+  id: string;
+  tenantId: string;
+  invoiceNo: string;
+  studentId: string;
+  studentName: string;
+  studentRegNo: string;
+  courseName: string;
+  yearOfStudy: number;
+  semester: number;
+  academicYear: string;
+  items: { description: string; amount: number }[];
+  totalAmount: number;
+  paidAmount: number;
+  balance: number;
+  dueDate: string;
+  status: 'PAID' | 'PARTIAL' | 'UNPAID' | 'OVERDUE';
+  createdAt: string;
+}
+
+export interface CollegePayment {
+  id: string;
+  tenantId: string;
+  receiptNo: string;
+  invoiceId?: string;
+  studentId: string;
+  studentName: string;
+  studentRegNo: string;
+  courseName: string;
+  amount: number;
+  paymentMethod: 'MPESA' | 'BANK_TRANSFER' | 'HELB_LOAN' | 'CDF_SPONSOR' | 'CASH' | 'CHEQUE';
+  transactionCode: string;
+  bankName?: string;
+  sponsorName?: string;
+  paymentDate: string;
+  academicYear: string;
+  semester: number;
+  recordedBy: string;
+  notes?: string;
+  status: 'COMPLETED' | 'REVERSED';
+}
+
+// ==========================================
 // THEOLOGY & DIVINITY FACULTY TYPES
 // (Spectrum: Certificate, Diploma, Higher Diploma, Bachelor of Theology)
 // ==========================================
@@ -640,6 +704,61 @@ export interface TheologyLibraryResource {
   status?: 'AVAILABLE' | 'LOW_STOCK' | 'CHECKED_OUT';
 }
 
+export interface TheologyFeePayment {
+  id: string;
+  tenantId: string;
+  receiptNo: string;
+  receiptNumber?: string;
+  studentId: string;
+  studentName: string;
+  studentRegNo: string;
+  programTitle?: string;
+  invoiceId?: string;
+  amount: number;
+  paymentMethod: 'MPESA' | 'BANK_DEPOSIT' | 'DIOCESE_SUBSIDY' | 'PARISH_SPONSORSHIP' | 'BISHOP_BURSARY' | 'CASH' | 'BANK' | 'CHEQUE' | 'BURSARY' | 'DIOCESE_SPONSORSHIP';
+  transactionCode?: string;
+  reference?: string;
+  sponsorName?: string;
+  sponsorOrDiocese?: string;
+  sponsorshipType?: string;
+  paymentCategory?: 'TUITION' | 'PRACTICUM_FEE' | 'ORDINATION_ROBES_VESTMENT' | 'LIBRARY_RESOURCE_FEE' | 'GRADUATION_FEE' | string;
+  paymentDate: string;
+  recordedBy?: string;
+  remarks?: string;
+  notes?: string;
+  status: 'COMPLETED' | 'REVERSED';
+}
+
+export type TheologyPayment = TheologyFeePayment;
+
+export interface TheologyInvoice {
+  id: string;
+  tenantId: string;
+  invoiceNo: string;
+  invoiceNumber?: string;
+  studentId: string;
+  studentName: string;
+  studentRegNo: string;
+  programId?: string;
+  programTitle: string;
+  yearOfStudy?: number;
+  semester: number;
+  academicYear: string;
+  items?: { id?: string; name?: string; description?: string; amount: number }[];
+  tuitionAmount?: number;
+  practicumFee?: number;
+  ordinationLevy?: number;
+  sponsorDiscountOrBursary?: number;
+  totalAmount: number;
+  paidAmount: number;
+  balance: number;
+  totalBilled?: number;
+  totalPaid?: number;
+  dueDate: string;
+  status: 'PAID' | 'PARTIAL' | 'UNPAID';
+  createdAt: string;
+}
+
 // RETAIL & WHOLESALE BUSINESS SPECIFIC TYPES
 export interface RetailProduct {
   id: string;
@@ -717,6 +836,53 @@ export interface RetailCustomer {
   lastPurchaseDate: string;
 }
 
+export interface RetailCustomerInvoice {
+  id: string;
+  tenantId: string;
+  invoiceNo: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  customerType: 'WHOLESALE' | 'CREDIT_ACCOUNT' | 'DISTRIBUTOR';
+  items: {
+    productId: string;
+    productName: string;
+    sku: string;
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+    lineTotal: number;
+  }[];
+  subtotal: number;
+  taxAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  amountPaid: number;
+  paidAmount?: number;
+  balanceDue: number;
+  balance?: number;
+  paymentTerms: 'NET_15' | 'NET_30' | 'NET_60' | 'DUE_ON_RECEIPT';
+  dueDate: string;
+  issueDate: string;
+  status: 'PAID' | 'PARTIAL' | 'UNPAID' | 'OVERDUE';
+}
+
+export interface RetailCustomerPayment {
+  id: string;
+  tenantId: string;
+  receiptNo: string;
+  customerId: string;
+  customerName: string;
+  invoiceId?: string;
+  amount: number;
+  paymentMethod: 'MPESA' | 'BANK_TRANSFER' | 'CHEQUE' | 'CASH';
+  transactionCode: string;
+  paymentDate: string;
+  receivedBy: string;
+  notes?: string;
+  status: 'COMPLETED' | 'REVERSED';
+}
+
 // HOSPITAL & CLINICAL TYPES
 export interface HospitalPatient {
   id: string;
@@ -746,6 +912,66 @@ export interface MedicalConsultation {
   feeAmount: number;
   date: string;
   status: 'COMPLETED' | 'IN_PROGRESS' | 'SCHEDULED';
+}
+
+export interface HospitalBillingInvoice {
+  id: string;
+  tenantId: string;
+  invoiceNo: string;
+  patientId: string;
+  patientName: string;
+  patientNo: string;
+  patientPhone?: string;
+  billingType: 'OUTPATIENT' | 'INPATIENT' | 'EMERGENCY';
+  items: {
+    id: string;
+    description: string;
+    category: 'CONSULTATION' | 'LABORATORY' | 'PHARMACY' | 'RADIOLOGY' | 'PROCEDURE' | 'BED_WARD' | 'NURSING';
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }[];
+  subtotal: number;
+  totalAmount?: number;
+  nhifOrInsuranceCovered: number;
+  insuranceProvider?: string;
+  insurancePolicyOrClaimNo?: string;
+  patientPayableAmount: number;
+  paidAmount: number;
+  balance: number;
+  status: 'PAID' | 'PARTIAL' | 'UNPAID' | 'INSURANCE_CLAIM_PENDING' | 'DISCHARGED_CLEARED';
+  invoiceDate: string;
+  doctorName?: string;
+}
+
+export interface HospitalBillingPayment {
+  id: string;
+  tenantId: string;
+  receiptNo: string;
+  invoiceId?: string;
+  patientId: string;
+  patientName: string;
+  patientNo: string;
+  amount: number;
+  paymentMethod: 'CASH' | 'MPESA' | 'CARD' | 'NHIF_SHA' | 'PRIVATE_INSURANCE';
+  transactionCode: string;
+  insuranceClaimNo?: string;
+  paymentDate: string;
+  cashierName: string;
+  notes?: string;
+  status: 'COMPLETED' | 'REVERSED';
+}
+
+export interface HospitalServiceTariff {
+  id: string;
+  tenantId: string;
+  code: string;
+  name: string;
+  category: 'CONSULTATION' | 'LABORATORY' | 'PHARMACY' | 'RADIOLOGY' | 'PROCEDURE' | 'WARD_BED';
+  standardPrice: number;
+  cashPrice?: number;
+  insurancePrice: number;
+  department: string;
 }
 
 export interface PharmacyItem {
