@@ -104,6 +104,13 @@ import {
   INITIAL_RETAIL_PAYMENTS
 } from '../data/initialData';
 
+import {
+  getEffectiveHostname,
+  resolveTenantFromHost,
+  navigateToTenantSubdomain,
+  navigateToPlatform
+} from '../services/TenantResolver';
+
 interface AuthContextType {
   user: AppUser | null;
   tenant: Tenant | null;
@@ -273,17 +280,33 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AppUser | null>(() => INITIAL_USERS[0]); // Default to Davetech Super Admin (Main Platform)
-  const [tenant, setTenant] = useState<Tenant | null>(() => INITIAL_TENANTS[0]);
-  const [isPlatformMode, setIsPlatformMode] = useState<boolean>(true);
+  const [allTenants, setAllTenants] = useState<Tenant[]>(INITIAL_TENANTS);
+  const [allUsers, setAllUsers] = useState<AppUser[]>(INITIAL_USERS);
+
+  const [tenant, setTenant] = useState<Tenant | null>(() => {
+    const res = resolveTenantFromHost(getEffectiveHostname(), INITIAL_TENANTS);
+    if (res.type === 'TENANT') return res.tenant;
+    return INITIAL_TENANTS[0];
+  });
+
+  const [isPlatformMode, setIsPlatformMode] = useState<boolean>(() => {
+    const res = resolveTenantFromHost(getEffectiveHostname(), INITIAL_TENANTS);
+    return res.type === 'PLATFORM';
+  });
+
+  const [user, setUser] = useState<AppUser | null>(() => {
+    const res = resolveTenantFromHost(getEffectiveHostname(), INITIAL_TENANTS);
+    if (res.type === 'TENANT') {
+      const matchedUser = INITIAL_USERS.find(u => u.tenantId === res.tenant.id);
+      return matchedUser || INITIAL_USERS[0];
+    }
+    return INITIAL_USERS[0]; // Default to Super Admin for Platform Master
+  });
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isSyncingFirestore, setIsSyncingFirestore] = useState<boolean>(false);
   const [lastFirestoreSyncTime, setLastFirestoreSyncTime] = useState<string | null>(null);
-
-  // Platform state
-  const [allTenants, setAllTenants] = useState<Tenant[]>(INITIAL_TENANTS);
-  const [allUsers, setAllUsers] = useState<AppUser[]>(INITIAL_USERS);
   const [subscriptionTiers, setSubscriptionTiers] = useState<SubscriptionTierConfig[]>(() => {
     try {
       const saved = localStorage.getItem('davetech_subscription_tiers');
@@ -446,27 +469,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchToPlatformMaster = () => {
-    const superAdminUser = allUsers.find(u => u.role === 'SUPER_ADMIN') || INITIAL_USERS[0];
-    setUser(superAdminUser);
-    setIsPlatformMode(true);
+    navigateToPlatform();
   };
 
   const switchTenantAsSuperAdmin = (tenantId: string) => {
     if (tenantId === 'davetech-main-platform' || tenantId === 'PLATFORM' || tenantId === 'ALL') {
-      switchToPlatformMaster();
+      navigateToPlatform();
       return;
     }
     const target = allTenants.find(t => t.id === tenantId);
     if (!target) return;
-    setIsPlatformMode(false);
-    setTenant(target);
-    if (user && user.role === 'SUPER_ADMIN') {
-      setUser({
-        ...user,
-        tenantId: target.id,
-        tenantName: target.name
-      });
-    }
+    const subdomain = target.subdomain || target.code.toLowerCase();
+    navigateToTenantSubdomain(subdomain);
   };
 
   // SUPER ADMIN ACTIONS

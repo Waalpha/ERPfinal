@@ -238,10 +238,99 @@ export const INITIAL_TENANTS: Tenant[] = [
       totalFeeCollected: 6450000,
       totalFeeBalance: 580000
     }
+  },
+  {
+    id: 'tenant-bitc',
+    name: 'Breakthrough Institute of Technology & Commercial Studies (BITC)',
+    code: 'BITC-COL',
+    subdomain: 'bitc',
+    customDomain: 'portal.bitc.ac.ke',
+    dnsStatus: 'CONFIGURED',
+    type: 'COLLEGE',
+    status: 'ACTIVE',
+    createdAt: '2024-06-01T08:00:00.000Z',
+    plan: 'ENTERPRISE',
+    modules: ['STUDENTS', 'COURSES', 'DEPARTMENTS', 'FEES', 'LIBRARY', 'HOSTEL', 'STAFF', 'REPORTS'],
+    currency: 'KES',
+    currentTerm: 'TERM_1',
+    currentAcademicYear: '2025',
+    motto: 'Empowering Technical Innovation and Professional Excellence',
+    contactEmail: 'admissions@bitc.ac.ke',
+    phone: '+254 711 000 222',
+    address: 'Commercial Avenue, Nairobi CBD, Kenya',
+    logoUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=160&auto=format&fit=crop&q=80',
+    stats: {
+      studentCount: 420,
+      staffCount: 32,
+      totalFeeCollected: 9600000,
+      totalFeeBalance: 1450000
+    }
+  },
+  {
+    id: 'tenant-st-marys',
+    name: "St. Mary's Academy & Senior High",
+    code: 'STM-SCH',
+    subdomain: 'stmarys',
+    customDomain: 'portal.stmarys.ac.ke',
+    dnsStatus: 'CONFIGURED',
+    type: 'PRIMARY_SCHOOL',
+    status: 'ACTIVE',
+    createdAt: '2024-03-01T08:00:00.000Z',
+    plan: 'PREMIUM',
+    modules: [
+      'STUDENTS',
+      'STAFF',
+      'CLASSES',
+      'CBC_ACADEMICS',
+      'ASSESSMENTS',
+      'FEES_FINANCE',
+      'ATTENDANCE',
+      'TIMETABLE',
+      'ASSIGNMENTS',
+      'CALENDAR',
+      'SMS_NOTIFICATIONS',
+      'REPORTS'
+    ],
+    currency: 'KES',
+    currentTerm: 'TERM_1',
+    currentAcademicYear: '2025',
+    motto: 'Knowledge, Discipline and Truth',
+    contactEmail: 'info@stmarys.ac.ke',
+    phone: '+254 722 333 444',
+    address: 'James Gichuru Road, Lavington, Nairobi, Kenya',
+    logoUrl: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=160&auto=format&fit=crop&q=80',
+    stats: {
+      studentCount: 390,
+      staffCount: 30,
+      totalFeeCollected: 7200000,
+      totalFeeBalance: 980000
+    }
   }
 ];
 
 export const INITIAL_USERS: AppUser[] = [
+  {
+    uid: 'user-bitc-principal',
+    email: 'principal@bitc.ac.ke',
+    displayName: 'Eng. Patrick Karanja (Director / Principal)',
+    tenantId: 'tenant-bitc',
+    tenantName: 'BITC College',
+    role: 'TENANT_ADMIN',
+    isActive: true,
+    phone: '+254 711 000 201',
+    photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80'
+  },
+  {
+    uid: 'user-stmarys-principal',
+    email: 'principal@stmarys.ac.ke',
+    displayName: 'Sr. Mary Christine Nduta (Head of School)',
+    tenantId: 'tenant-st-marys',
+    tenantName: "St. Mary's Academy",
+    role: 'TENANT_ADMIN',
+    isActive: true,
+    phone: '+254 722 333 401',
+    photoURL: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80'
+  },
   {
     uid: 'user-theology-dean',
     email: 'dean.mutua@stpaulstheo.ac.ke',
@@ -540,6 +629,58 @@ export const INITIAL_STUDENTS: Record<string, Student[]> = {
       totalBilled: 50000,
       totalPaid: 38000,
       createdAt: '2024-01-10T10:00:00.000Z'
+    }
+  ],
+  'tenant-st-marys': [
+    {
+      id: 'stud-stm-01',
+      tenantId: 'tenant-st-marys',
+      admissionNo: 'STM-2024-0101',
+      firstName: 'Alvin',
+      middleName: 'Kiplagat',
+      lastName: 'Korir',
+      gender: 'Male',
+      dob: '2016-03-15',
+      grade: 'Grade 4',
+      stream: 'Red',
+      admissionDate: '2024-01-08',
+      birthCertNo: 'BC-9928172',
+      parentName: 'David Korir',
+      parentRelationship: 'Father',
+      parentPhone: '+254 722 111 222',
+      parentEmail: 'dkorir@gmail.com',
+      parentOccupation: 'Accountant',
+      residentialAddress: 'Lavington, Nairobi',
+      status: 'ACTIVE',
+      feeBalance: 0,
+      totalBilled: 72000,
+      totalPaid: 72000,
+      createdAt: '2024-01-08T08:00:00.000Z'
+    },
+    {
+      id: 'stud-stm-02',
+      tenantId: 'tenant-st-marys',
+      admissionNo: 'STM-2024-0102',
+      firstName: 'Stacy',
+      middleName: 'Muthoni',
+      lastName: 'Waweru',
+      gender: 'Female',
+      dob: '2015-07-20',
+      grade: 'Grade 5',
+      stream: 'Blue',
+      admissionDate: '2024-01-08',
+      birthCertNo: 'BC-8819203',
+      parentName: 'Jane Waweru',
+      parentRelationship: 'Mother',
+      parentPhone: '+254 733 222 333',
+      parentEmail: 'jwaweru@gmail.com',
+      parentOccupation: 'Business Executive',
+      residentialAddress: 'Kileleshwa, Nairobi',
+      status: 'ACTIVE',
+      feeBalance: 18000,
+      totalBilled: 76000,
+      totalPaid: 58000,
+      createdAt: '2024-01-08T08:30:00.000Z'
     }
   ]
 };
@@ -1264,6 +1405,28 @@ export const INITIAL_COLLEGE_DEPARTMENTS: Record<string, CollegeDepartment[]> = 
       courseCount: 4,
       building: 'Engineering Complex'
     }
+  ],
+  'tenant-bitc': [
+    {
+      id: 'dept-bitc-01',
+      tenantId: 'tenant-bitc',
+      code: 'BITC-TECH',
+      name: 'School of Software Engineering & Applied Computing',
+      headOfDepartment: 'Eng. Patrick Karanja',
+      facultyCount: 12,
+      courseCount: 4,
+      building: 'Innovation Block 1'
+    },
+    {
+      id: 'dept-bitc-02',
+      tenantId: 'tenant-bitc',
+      code: 'BITC-COMM',
+      name: 'Faculty of Commercial Studies & Digital Marketing',
+      headOfDepartment: 'Dr. Grace Kilonzo',
+      facultyCount: 10,
+      courseCount: 3,
+      building: 'Commercial Wing'
+    }
   ]
 };
 
@@ -1316,6 +1479,40 @@ export const INITIAL_COLLEGE_COURSES: Record<string, CollegeCourse[]> = {
       units: [
         { unitCode: 'CY101', unitTitle: 'Network Security Fundamentals', creditHours: 3 },
         { unitCode: 'CY102', unitTitle: 'Ethical Hacking & Incident Response', creditHours: 3 }
+      ]
+    }
+  ],
+  'tenant-bitc': [
+    {
+      id: 'course-bitc-01',
+      tenantId: 'tenant-bitc',
+      code: 'BITC-CS-101',
+      title: 'Diploma in Full-Stack Software Development & Cloud',
+      departmentId: 'dept-bitc-01',
+      departmentName: 'School of Software Engineering & Applied Computing',
+      level: 'DIPLOMA',
+      durationSemesters: 4,
+      tuitionPerSemester: 55000,
+      enrolledStudentsCount: 140,
+      units: [
+        { unitCode: 'SE101', unitTitle: 'TypeScript, React & Enterprise Frameworks', creditHours: 4 },
+        { unitCode: 'SE102', unitTitle: 'Cloud APIs & Microservices Architecture', creditHours: 4 }
+      ]
+    },
+    {
+      id: 'course-bitc-02',
+      tenantId: 'tenant-bitc',
+      code: 'BITC-DIT-201',
+      title: 'Diploma in Information Technology & Network Security',
+      departmentId: 'dept-bitc-01',
+      departmentName: 'School of Software Engineering & Applied Computing',
+      level: 'DIPLOMA',
+      durationSemesters: 4,
+      tuitionPerSemester: 52000,
+      enrolledStudentsCount: 110,
+      units: [
+        { unitCode: 'NET101', unitTitle: 'Enterprise Network Protocols & Cisco Routing', creditHours: 3 },
+        { unitCode: 'SEC102', unitTitle: 'Cyber Security Defenses & Firewalls', creditHours: 3 }
       ]
     }
   ]
@@ -1378,6 +1575,45 @@ export const INITIAL_COLLEGE_STUDENTS: Record<string, CollegeStudent[]> = {
       totalBilled: 255000,
       totalPaid: 223000,
       admissionDate: '2022-09-05'
+    }
+  ],
+  'tenant-bitc': [
+    {
+      id: 'cstud-bitc-01',
+      tenantId: 'tenant-bitc',
+      regNo: 'BITC/DSE/2024/0045',
+      fullName: 'Antony Maina Wambugu',
+      email: 'antony.maina@students.bitc.ac.ke',
+      phone: '+254 711 556 677',
+      courseId: 'course-bitc-01',
+      courseName: 'Diploma in Full-Stack Software Development & Cloud',
+      departmentName: 'School of Software Engineering',
+      yearOfStudy: 1,
+      semester: 2,
+      status: 'ACTIVE',
+      feeBalance: 12000,
+      totalBilled: 110000,
+      totalPaid: 98000,
+      hostelRoom: 'Hostel East - Room 14',
+      admissionDate: '2024-01-12'
+    },
+    {
+      id: 'cstud-bitc-02',
+      tenantId: 'tenant-bitc',
+      regNo: 'BITC/DIT/2023/0188',
+      fullName: 'Faith Chelangat Koech',
+      email: 'faith.chelangat@students.bitc.ac.ke',
+      phone: '+254 722 889 900',
+      courseId: 'course-bitc-02',
+      courseName: 'Diploma in Information Technology & Network Security',
+      departmentName: 'School of Software Engineering',
+      yearOfStudy: 2,
+      semester: 1,
+      status: 'ACTIVE',
+      feeBalance: 0,
+      totalBilled: 104000,
+      totalPaid: 104000,
+      admissionDate: '2023-09-10'
     }
   ]
 };
