@@ -64,8 +64,8 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Available users in this specific tenant (plus Super Admin)
-  const tenantUsers = allUsers.filter(
-    (u) => u.tenantId === tenant.id || u.role === 'SUPER_ADMIN'
+  const tenantUsers = (allUsers || []).filter(
+    (u) => u && (u.tenantId === tenant?.id || u.role === 'SUPER_ADMIN')
   );
 
   // Define sidebar navigation items based on tenant type and enabled modules

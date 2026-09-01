@@ -392,7 +392,7 @@ export const CollegeManagement: React.FC<CollegeManagementProps> = ({ currentTab
                 <h3 className="font-bold text-slate-900 text-sm mt-2">{dept.name}</h3>
                 <p className="text-xs text-slate-500 mt-1">Head: <span className="font-medium text-slate-700">{dept.headOfDepartment}</span></p>
                 <div className="mt-3 pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
-                  <span>Courses: <strong className="text-slate-900">{collegeCourses.filter(c => c.departmentId === dept.id).length}</strong></span>
+                  <span>Courses: <strong className="text-slate-900">{(collegeCourses || []).filter(c => c.departmentId === dept.id).length}</strong></span>
                   <span className="text-indigo-600 font-semibold text-[11px]">Manage Curricula →</span>
                 </div>
               </div>
@@ -447,7 +447,7 @@ export const CollegeManagement: React.FC<CollegeManagementProps> = ({ currentTab
                     <td className="py-3 px-4 font-bold text-slate-900">KES {c.tuitionPerSemester.toLocaleString()}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-0.5 rounded bg-slate-100 font-semibold text-slate-800">
-                        {collegeStudents.filter(s => s.courseId === c.id).length} Students
+                        {(collegeStudents || []).filter(s => s.courseId === c.id).length} Students
                       </span>
                     </td>
                   </tr>

@@ -127,6 +127,7 @@ interface AuthContextType {
   // Platform & Super Admin operations
   allTenants: Tenant[];
   allPlatformUsers: AppUser[];
+  allUsers: AppUser[];
   createTenant: (tenantData: Omit<Tenant, 'id' | 'createdAt'>, adminDetails?: { name: string; email: string }) => Promise<Tenant>;
   updateTenant: (tenantId: string, updates: Partial<Tenant>) => Promise<void>;
   updateTenantSettings: (tenantId: string, updates: Partial<Tenant>) => Promise<void>;
@@ -2299,6 +2300,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchToPlatformMaster,
         allTenants,
         allPlatformUsers: allUsers,
+        allUsers,
         createTenant,
         updateTenant,
         updateTenantSettings: updateTenant,

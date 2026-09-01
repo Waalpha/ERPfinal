@@ -253,12 +253,12 @@ export const PlatformShell: React.FC = () => {
           <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 space-y-3 mt-auto">
             <div className="flex items-center justify-between text-xs text-slate-300 font-bold">
               <span>Fleet Summary</span>
-              <span className="text-emerald-400 font-mono text-[11px]">{allTenants.length} Active</span>
+              <span className="text-emerald-400 font-mono text-[11px]">{(allTenants || []).length} Active</span>
             </div>
             <div className="space-y-1.5 text-[11px] text-slate-400">
               <div className="flex justify-between">
                 <span>Platform Users:</span>
-                <span className="text-white font-mono">{allPlatformUsers.length}</span>
+                <span className="text-white font-mono">{(allPlatformUsers || []).length}</span>
               </div>
               <div className="flex justify-between">
                 <span>DNS Ingress:</span>
