@@ -21,6 +21,97 @@ export type TenantPlan = 'BASIC' | 'PREMIUM' | 'ENTERPRISE';
 
 export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'TRIAL';
 
+export interface SubscriptionTierConfig {
+  id: TenantPlan;
+  name: string;
+  tagline: string;
+  priceMonthly: number;
+  priceAnnual: number;
+  currency: string;
+  isPopular?: boolean;
+  maxLearnersOrRecords: string;
+  maxStaffAccounts: string;
+  maxStorageGB: number;
+  colorScheme: 'slate' | 'indigo' | 'purple' | 'emerald';
+  features: string[];
+  includedModules: string[];
+  supportSLA: string;
+}
+
+export const DEFAULT_SUBSCRIPTION_TIERS: SubscriptionTierConfig[] = [
+  {
+    id: 'BASIC',
+    name: 'Basic Starter Tier',
+    tagline: 'Essential school, retail & single-branch starter package',
+    priceMonthly: 25000,
+    priceAnnual: 270000,
+    currency: 'KES',
+    isPopular: false,
+    maxLearnersOrRecords: 'Up to 300 Learners / Records',
+    maxStaffAccounts: '5 Staff / Teacher Accounts',
+    maxStorageGB: 10,
+    colorScheme: 'slate',
+    supportSLA: 'Standard Email & Ticket Support (24h)',
+    features: [
+      'Up to 300 students / 500 catalog items',
+      'CBC & Standard Academic Term Reporting',
+      'Fee Structure & Direct Receipt Invoicing',
+      '5 Staff & Teacher Role Accounts',
+      'Daily Attendance Roll Call',
+      'Basic SMS Gate Notifications'
+    ],
+    includedModules: ['STUDENTS', 'STAFF', 'CLASSES', 'CBC_ACADEMICS', 'ASSESSMENTS', 'FEES_FINANCE', 'ATTENDANCE', 'REPORTS']
+  },
+  {
+    id: 'PREMIUM',
+    name: 'Premium Growth Tier',
+    tagline: 'For mid-size institutions, colleges & growing business chains',
+    priceMonthly: 55000,
+    priceAnnual: 594000,
+    currency: 'KES',
+    isPopular: true,
+    maxLearnersOrRecords: 'Up to 1,500 Learners / Unlimited Records',
+    maxStaffAccounts: '25 Staff & Faculty Accounts',
+    maxStorageGB: 50,
+    colorScheme: 'indigo',
+    supportSLA: 'Priority WhatsApp & Dedicated Phone Support (2h SLA)',
+    features: [
+      'Up to 1,500 students / unlimited products',
+      'Automated Bulk SMS Gateway & Gate Alerts',
+      'M-Pesa Express & Bank Instant Reconciliation',
+      '25 Staff Accounts + Granular Role Matrix',
+      'Timetable Scheduler & Assignment Submissions',
+      'Discipline Incident & Behavior Tracking',
+      'Point of Sale (POS) & Multi-Store Inventory'
+    ],
+    includedModules: ['STUDENTS', 'STAFF', 'CLASSES', 'CBC_ACADEMICS', 'ASSESSMENTS', 'FEES_FINANCE', 'ATTENDANCE', 'TIMETABLE', 'ASSIGNMENTS', 'DISCIPLINE', 'CALENDAR', 'SMS_NOTIFICATIONS', 'REPORTS', 'RETAIL_POS', 'INVENTORY']
+  },
+  {
+    id: 'ENTERPRISE',
+    name: 'Enterprise Campus Tier',
+    tagline: 'Universities, Hospitals, Seminaries & Multi-Branch Conglomerates',
+    priceMonthly: 120000,
+    priceAnnual: 1296000,
+    currency: 'KES',
+    isPopular: false,
+    maxLearnersOrRecords: 'Unlimited Learners, Patients & Products',
+    maxStaffAccounts: 'Unlimited Staff & Multi-Campus Admins',
+    maxStorageGB: 500,
+    colorScheme: 'purple',
+    supportSLA: '24/7 Dedicated Account Manager & Guaranteed 15-min SLA',
+    features: [
+      'Unlimited Students, Patients & Inventory SKU scale',
+      'Clinical EMR Triage, Pharmacy & Medical Billing',
+      'Theology Divinity Seminary, Practicums & Patristics Library',
+      'Higher-Ed Degree Programs, Faculty & Hostel Allocation',
+      'Custom Subdomain + Dedicated Custom CNAME Ingress',
+      'Unlimited Staff Accounts & Multi-Campus Sync',
+      'Direct Cloud Firestore Partition & Automated Backups'
+    ],
+    includedModules: ['STUDENTS', 'STAFF', 'CLASSES', 'CBC_ACADEMICS', 'ASSESSMENTS', 'FEES_FINANCE', 'ATTENDANCE', 'TIMETABLE', 'ASSIGNMENTS', 'DISCIPLINE', 'CALENDAR', 'SMS_NOTIFICATIONS', 'REPORTS', 'RETAIL_POS', 'INVENTORY', 'HOSPITAL_CLINIC', 'PHARMACY', 'LIBRARY', 'HOSTEL']
+  }
+];
+
 export const MAIN_DOMAIN = 'Davetech.co.ke';
 export const MAIN_DOMAIN_LOWER = 'davetech.co.ke';
 

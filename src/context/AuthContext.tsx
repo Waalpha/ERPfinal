@@ -54,7 +54,9 @@ import {
   HospitalBillingPayment,
   HospitalServiceTariff,
   RetailCustomerInvoice,
-  RetailCustomerPayment
+  RetailCustomerPayment,
+  SubscriptionTierConfig,
+  DEFAULT_SUBSCRIPTION_TIERS
 } from '../types';
 import {
   INITIAL_TENANTS,
@@ -125,6 +127,9 @@ interface AuthContextType {
   updateTenantStatus: (tenantId: string, status: TenantStatus) => Promise<void>;
   updateTenantPlan: (tenantId: string, plan: TenantPlan) => Promise<void>;
   toggleTenantModule: (tenantId: string, moduleId: string) => Promise<void>;
+  subscriptionTiers: SubscriptionTierConfig[];
+  updateSubscriptionTier: (tierId: TenantPlan, updates: Partial<SubscriptionTierConfig>) => Promise<void>;
+  resetSubscriptionTiers: () => Promise<void>;
   createPlatformUser: (userData: Omit<AppUser, 'uid' | 'createdAt'>) => Promise<AppUser>;
   updatePlatformUserRole: (userId: string, newRole: UserRole) => Promise<void>;
   toggleUserActiveStatus: (userId: string) => Promise<void>;
@@ -279,6 +284,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Platform state
   const [allTenants, setAllTenants] = useState<Tenant[]>(INITIAL_TENANTS);
   const [allUsers, setAllUsers] = useState<AppUser[]>(INITIAL_USERS);
+  const [subscriptionTiers, setSubscriptionTiers] = useState<SubscriptionTierConfig[]>(() => {
+    try {
+      const saved = localStorage.getItem('davetech_subscription_tiers');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // Fallback
+    }
+    return DEFAULT_SUBSCRIPTION_TIERS;
+  });
 
   // Tenant Collections (Isolated per tenantId)
   const [studentsMap, setStudentsMap] = useState<Record<string, Student[]>>(INITIAL_STUDENTS);
@@ -565,7 +581,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (tenant?.id === tenantId) {
       setTenant(prev => prev ? { ...prev, plan } : null);
     }
-    logAuditEvent('PLAN_UPGRADED', `Updated subscription plan to ${plan}`);
+    logAuditEvent('PLAN_UPGRADED', `Updated organization subscription plan to ${plan}`);
+    try {
+      await updateDoc(doc(db, 'tenants', tenantId), { plan });
+    } catch {
+      // Local fallback
+    }
+  };
+
+  const updateSubscriptionTier = async (tierId: TenantPlan, updates: Partial<SubscriptionTierConfig>) => {
+    setSubscriptionTiers(prev => {
+      const updated = prev.map(t => t.id === tierId ? { ...t, ...updates } : t);
+      try {
+        localStorage.setItem('davetech_subscription_tiers', JSON.stringify(updated));
+      } catch {
+        // Storage fallback
+      }
+      return updated;
+    });
+    logAuditEvent('SUBSCRIPTION_TIER_EDITED', `Super Admin updated subscription tier configuration for ${tierId}: ${Object.keys(updates).join(', ')}`, 'SETTINGS');
+    try {
+      await setDoc(doc(db, 'platform_settings', `tier_${tierId.toLowerCase()}`), updates, { merge: true });
+    } catch {
+      // Local state fallback
+    }
+  };
+
+  const resetSubscriptionTiers = async () => {
+    setSubscriptionTiers(DEFAULT_SUBSCRIPTION_TIERS);
+    try {
+      localStorage.setItem('davetech_subscription_tiers', JSON.stringify(DEFAULT_SUBSCRIPTION_TIERS));
+    } catch {
+      // Storage fallback
+    }
+    logAuditEvent('SUBSCRIPTION_TIERS_RESET', `Super Admin reset platform subscription tiers to factory defaults`, 'SETTINGS');
   };
 
   const toggleTenantModule = async (tenantId: string, moduleId: string) => {
@@ -2243,6 +2292,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateTenantStatus,
         updateTenantPlan,
         toggleTenantModule,
+        subscriptionTiers,
+        updateSubscriptionTier,
+        resetSubscriptionTiers,
         createPlatformUser,
         updatePlatformUserRole,
         toggleUserActiveStatus,

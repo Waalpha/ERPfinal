@@ -24,7 +24,7 @@ import { LogoUploader } from './components/LogoUploader';
 import { Student, TenantType, TenantPlan } from './types';
 
 const MainLayout: React.FC = () => {
-  const { user, tenant, isPlatformMode, createTenant } = useAuth();
+  const { user, tenant, isPlatformMode, createTenant, subscriptionTiers } = useAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState<string>(() => {
     if (isPlatformMode || user?.role === 'SUPER_ADMIN') return 'super-admin-overview';
@@ -393,9 +393,15 @@ const MainLayout: React.FC = () => {
                     onChange={(e) => setNewTenantPlan(e.target.value as TenantPlan)}
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none font-bold text-indigo-700"
                   >
-                    <option value="BASIC">BASIC (KES 25,000/mo)</option>
-                    <option value="PREMIUM">PREMIUM (KES 55,000/mo)</option>
-                    <option value="ENTERPRISE">ENTERPRISE (KES 120,000/mo)</option>
+                    {(subscriptionTiers && subscriptionTiers.length > 0 ? subscriptionTiers : [
+                      { id: 'BASIC', name: 'Basic Starter', priceMonthly: 25000, currency: 'KES' },
+                      { id: 'PREMIUM', name: 'Premium Growth', priceMonthly: 55000, currency: 'KES' },
+                      { id: 'ENTERPRISE', name: 'Enterprise Campus', priceMonthly: 120000, currency: 'KES' }
+                    ]).map((tier: any) => (
+                      <option key={tier.id} value={tier.id}>
+                        {tier.id} — {tier.currency || 'KES'} {tier.priceMonthly.toLocaleString()}/mo ({tier.name})
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   Building2,
@@ -23,9 +23,18 @@ import {
   Edit2,
   Cloud,
   Database,
-  RefreshCw
+  RefreshCw,
+  Sliders,
+  RotateCcw,
+  Shield,
+  HardDrive,
+  ArrowRight,
+  Tag,
+  Plus,
+  X,
+  DollarSign
 } from 'lucide-react';
-import { Tenant, TenantPlan, TenantStatus, MAIN_DOMAIN } from '../../types';
+import { Tenant, TenantPlan, TenantStatus, MAIN_DOMAIN, SubscriptionTierConfig } from '../../types';
 import { LogoUploader } from '../../components/LogoUploader';
 
 interface SuperAdminDashboardProps {
@@ -54,7 +63,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     lastFirestoreSyncTime,
     firebaseProjectId,
     firestoreDatabaseName,
-    syncAllDataToFirestore
+    syncAllDataToFirestore,
+    subscriptionTiers,
+    updateSubscriptionTier,
+    resetSubscriptionTiers
   } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,6 +79,92 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [editLogoUrlVal, setEditLogoUrlVal] = useState('');
   const [copiedTenantId, setCopiedTenantId] = useState<string | null>(null);
   const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
+
+  // Subscription Tier Editing State
+  const [editingTier, setEditingTier] = useState<SubscriptionTierConfig | null>(null);
+  const [tierName, setTierName] = useState('');
+  const [tierTagline, setTierTagline] = useState('');
+  const [tierMonthlyPrice, setTierMonthlyPrice] = useState(25000);
+  const [tierAnnualPrice, setTierAnnualPrice] = useState(270000);
+  const [tierCurrency, setTierCurrency] = useState('KES');
+  const [tierMaxLearners, setTierMaxLearners] = useState('');
+  const [tierMaxStaff, setTierMaxStaff] = useState('');
+  const [tierStorageGB, setTierStorageGB] = useState(10);
+  const [tierSupportSLA, setTierSupportSLA] = useState('');
+  const [tierFeatures, setTierFeatures] = useState<string[]>([]);
+  const [newFeatureInput, setNewFeatureInput] = useState('');
+  const [tierIsPopular, setTierIsPopular] = useState(false);
+  const [tierActionSuccessMsg, setTierActionSuccessMsg] = useState<string | null>(null);
+
+  // Quick Plan Assignment State
+  const [showAssignPlanModal, setShowAssignPlanModal] = useState(false);
+  const [assignTargetTenantId, setAssignTargetTenantId] = useState(allTenants[0]?.id || '');
+  const [assignTargetPlan, setAssignTargetPlan] = useState<TenantPlan>('PREMIUM');
+
+  const openEditTierModal = (tier: SubscriptionTierConfig) => {
+    setEditingTier(tier);
+    setTierName(tier.name);
+    setTierTagline(tier.tagline);
+    setTierMonthlyPrice(tier.priceMonthly);
+    setTierAnnualPrice(tier.priceAnnual);
+    setTierCurrency(tier.currency || 'KES');
+    setTierMaxLearners(tier.maxLearnersOrRecords);
+    setTierMaxStaff(tier.maxStaffAccounts);
+    setTierStorageGB(tier.maxStorageGB);
+    setTierSupportSLA(tier.supportSLA);
+    setTierFeatures([...tier.features]);
+    setNewFeatureInput('');
+    setTierIsPopular(!!tier.isPopular);
+  };
+
+  const handleSaveTier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTier) return;
+    await updateSubscriptionTier(editingTier.id, {
+      name: tierName.trim(),
+      tagline: tierTagline.trim(),
+      priceMonthly: Number(tierMonthlyPrice) || 0,
+      priceAnnual: Number(tierAnnualPrice) || 0,
+      currency: tierCurrency,
+      maxLearnersOrRecords: tierMaxLearners.trim(),
+      maxStaffAccounts: tierMaxStaff.trim(),
+      maxStorageGB: Number(tierStorageGB) || 0,
+      supportSLA: tierSupportSLA.trim(),
+      features: tierFeatures.filter(f => f.trim().length > 0),
+      isPopular: tierIsPopular
+    });
+    setTierActionSuccessMsg(`Successfully updated ${editingTier.id} Subscription Tier configuration!`);
+    setEditingTier(null);
+    setTimeout(() => setTierActionSuccessMsg(null), 4000);
+  };
+
+  const handleAddFeature = () => {
+    if (!newFeatureInput.trim()) return;
+    setTierFeatures(prev => [...prev, newFeatureInput.trim()]);
+    setNewFeatureInput('');
+  };
+
+  const handleDeleteFeature = (index: number) => {
+    setTierFeatures(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAssignTenantPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignTargetTenantId) return;
+    await updateTenantPlan(assignTargetTenantId, assignTargetPlan);
+    const targetTenant = allTenants.find(t => t.id === assignTargetTenantId);
+    setTierActionSuccessMsg(`Assigned ${targetTenant?.name || 'Organization'} to ${assignTargetPlan} Tier!`);
+    setShowAssignPlanModal(false);
+    setTimeout(() => setTierActionSuccessMsg(null), 4000);
+  };
+
+  const handleResetTiers = async () => {
+    if (window.confirm("Reset all platform subscription tiers back to default factory pricing and limits?")) {
+      await resetSubscriptionTiers();
+      setTierActionSuccessMsg("Reset platform subscription tiers to defaults.");
+      setTimeout(() => setTierActionSuccessMsg(null), 4000);
+    }
+  };
 
   const handlePushAllToCloud = async () => {
     setSyncStatusMsg('Pushing all tenant entities and user collections to Cloud Firestore...');
@@ -120,13 +218,19 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const totalUsers = allPlatformUsers.length;
   const estimatedStudents = allTenants.reduce((sum, t) => sum + (t.stats?.studentCount || 0), 0);
 
-  const planPricing = {
-    BASIC: 25000,
-    PREMIUM: 55000,
-    ENTERPRISE: 120000
-  };
+  const tierPriceMap = useMemo(() => {
+    const map: Record<string, number> = {
+      BASIC: 25000,
+      PREMIUM: 55000,
+      ENTERPRISE: 120000
+    };
+    subscriptionTiers.forEach(t => {
+      map[t.id] = t.priceMonthly;
+    });
+    return map;
+  }, [subscriptionTiers]);
 
-  const estimatedMonthlyMRR = allTenants.reduce((sum, t) => sum + (planPricing[t.plan] || 25000), 0);
+  const estimatedMonthlyMRR = allTenants.reduce((sum, t) => sum + (tierPriceMap[t.plan] || 25000), 0);
 
   const filteredTenants = allTenants.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -611,63 +715,217 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       {/* Subscriptions & Plans Tab */}
       {currentTab === 'super-admin-plans' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm relative overflow-hidden">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Basic Tier</div>
-              <div className="text-3xl font-black text-slate-900 mt-2">
-                KES 25,000<span className="text-xs font-normal text-slate-500">/month</span>
+          {/* Header Action Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <div className="flex items-center space-x-2 text-indigo-600 mb-1">
+                  <CreditCard className="h-5 w-5" />
+                  <h2 className="text-lg font-black text-slate-900">Multi-Tenant Subscription Matrix & Billing Architecture</h2>
+                </div>
+                <p className="text-xs text-slate-500 max-w-2xl">
+                  Configure monthly and annual subscription pricing (KES), tune capacity quotas (students, staff, cloud storage), modify feature lists, and assign plans to active institutions.
+                </p>
               </div>
-              <p className="text-xs text-slate-500 mt-2">Essential school/retail starter package</p>
-              <div className="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-700">
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-emerald-600" /><span>Up to 300 students / 500 products</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-emerald-600" /><span>CBC & Academic Reporting</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-emerald-600" /><span>Fee & Receipt Invoicing</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-emerald-600" /><span>5 Staff Accounts</span></div>
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Active Tenants:</span>
-                <span className="font-bold text-slate-900">{allTenants.filter(t => t.plan === 'BASIC').length}</span>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border-2 border-indigo-600 p-6 shadow-md relative overflow-hidden">
-              <div className="absolute top-3 right-3 bg-indigo-600 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
-                Popular
-              </div>
-              <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">Premium Tier</div>
-              <div className="text-3xl font-black text-slate-900 mt-2">
-                KES 55,000<span className="text-xs font-normal text-slate-500">/month</span>
-              </div>
-              <p className="text-xs text-slate-500 mt-2">For mid-size institutions & busy retail chains</p>
-              <div className="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-700">
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-indigo-600" /><span>Up to 1,500 students / unlimited products</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-indigo-600" /><span>Bulk SMS Gateway & Automated Alerts</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-indigo-600" /><span>M-Pesa Express Instant Reconciliation</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-indigo-600" /><span>25 Staff Accounts + Role Matrix</span></div>
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Active Tenants:</span>
-                <span className="font-bold text-indigo-600">{allTenants.filter(t => t.plan === 'PREMIUM').length}</span>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleResetTiers}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Reset Defaults</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAssignPlanModal(true)}
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-sm transition"
+                >
+                  <Tag className="h-3.5 w-3.5" />
+                  <span>Assign Organization Plan</span>
+                </button>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm relative overflow-hidden">
-              <div className="text-xs font-bold uppercase tracking-wider text-purple-600">Enterprise Tier</div>
-              <div className="text-3xl font-black text-slate-900 mt-2">
-                KES 120,000<span className="text-xs font-normal text-slate-500">/month</span>
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-100">
+              <div className="bg-slate-50 rounded-xl p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Projected MRR</div>
+                <div className="text-base font-black text-slate-900 mt-0.5">
+                  KES {estimatedMonthlyMRR.toLocaleString()}
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-2">Universities, Hospitals & Multi-Branch Groups</p>
-              <div className="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-700">
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-purple-600" /><span>Unlimited Students, Patients & Inventory</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-purple-600" /><span>Clinical EMR / Higher-Ed Hostel & Library</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-purple-600" /><span>Custom Domain & Dedicated SLA</span></div>
-                <div className="flex items-center space-x-2"><Check className="h-4 w-4 text-purple-600" /><span>Unlimited Staff & Multi-Campus Sync</span></div>
+              <div className="bg-slate-50 rounded-xl p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Basic Tier Fleet</div>
+                <div className="text-base font-black text-slate-900 mt-0.5">
+                  {allTenants.filter(t => t.plan === 'BASIC').length} Institutions
+                </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Active Tenants:</span>
-                <span className="font-bold text-purple-600">{allTenants.filter(t => t.plan === 'ENTERPRISE').length}</span>
+              <div className="bg-indigo-50/50 rounded-xl p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Premium Tier Fleet</div>
+                <div className="text-base font-black text-indigo-950 mt-0.5">
+                  {allTenants.filter(t => t.plan === 'PREMIUM').length} Institutions
+                </div>
+              </div>
+              <div className="bg-purple-50/50 rounded-xl p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500">Enterprise Campus Fleet</div>
+                <div className="text-base font-black text-purple-950 mt-0.5">
+                  {allTenants.filter(t => t.plan === 'ENTERPRISE').length} Institutions
+                </div>
               </div>
             </div>
+          </div>
+
+          {tierActionSuccessMsg && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-in fade-in">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span>{tierActionSuccessMsg}</span>
+            </div>
+          )}
+
+          {/* Dynamic Tier Cards Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {subscriptionTiers.map((tier) => {
+              const isBasic = tier.id === 'BASIC';
+              const isPremium = tier.id === 'PREMIUM';
+              const isEnterprise = tier.id === 'ENTERPRISE';
+              const tenantsInTier = allTenants.filter(t => t.plan === tier.id);
+
+              const borderColor = isPremium
+                ? 'border-indigo-600 ring-2 ring-indigo-600/20'
+                : isEnterprise
+                ? 'border-purple-600/60'
+                : 'border-slate-200';
+
+              const headerBadgeColor = isPremium
+                ? 'text-indigo-600 bg-indigo-50'
+                : isEnterprise
+                ? 'text-purple-600 bg-purple-50'
+                : 'text-slate-600 bg-slate-100';
+
+              const checkColor = isPremium
+                ? 'text-indigo-600'
+                : isEnterprise
+                ? 'text-purple-600'
+                : 'text-emerald-600';
+
+              return (
+                <div
+                  key={tier.id}
+                  className={`bg-white rounded-2xl border ${borderColor} p-6 shadow-sm relative flex flex-col justify-between overflow-hidden`}
+                >
+                  {tier.isPopular && (
+                    <div className="absolute top-3 right-3 bg-indigo-600 text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-xs">
+                      Popular Choice
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${headerBadgeColor}`}>
+                        {tier.id}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 mt-2">{tier.name}</h3>
+                    <p className="text-xs text-slate-500 mt-1 min-h-[32px]">{tier.tagline}</p>
+
+                    <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-xs font-bold text-slate-500">{tier.currency}</span>
+                        <span className="text-2xl font-black text-slate-900">{tier.priceMonthly.toLocaleString()}</span>
+                        <span className="text-xs font-medium text-slate-500">/ month</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-medium mt-1">
+                        Billed annually: <span className="font-bold text-slate-700">{tier.currency} {tier.priceAnnual.toLocaleString()}</span> / year
+                      </div>
+                    </div>
+
+                    {/* Quota & Limit Specs */}
+                    <div className="mt-4 space-y-2 text-xs">
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50/70 border border-slate-100">
+                        <span className="text-slate-500 font-medium">Capacity Quota:</span>
+                        <span className="font-bold text-slate-800 text-right">{tier.maxLearnersOrRecords}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50/70 border border-slate-100">
+                        <span className="text-slate-500 font-medium">Staff Accounts:</span>
+                        <span className="font-bold text-slate-800 text-right">{tier.maxStaffAccounts}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50/70 border border-slate-100">
+                        <span className="text-slate-500 font-medium">Cloud Storage:</span>
+                        <span className="font-bold text-slate-800">{tier.maxStorageGB} GB Encrypted</span>
+                      </div>
+                    </div>
+
+                    {/* Feature Matrix Checklist */}
+                    <div className="mt-5 pt-4 border-t border-slate-100">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+                        Included Features ({tier.features.length})
+                      </div>
+                      <div className="space-y-2 text-xs text-slate-700">
+                        {tier.features.map((feat, idx) => (
+                          <div key={idx} className="flex items-start space-x-2">
+                            <Check className={`h-4 w-4 ${checkColor} shrink-0 mt-0.5`} />
+                            <span className="leading-snug">{feat}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SLA Badge */}
+                    <div className="mt-4 p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center space-x-2 text-xs text-slate-600">
+                      <Shield className="h-4 w-4 text-indigo-500 shrink-0" />
+                      <span className="text-[11px] leading-tight font-medium">{tier.supportSLA}</span>
+                    </div>
+                  </div>
+
+                  {/* Footer Stats & Actions */}
+                  <div className="mt-6 pt-4 border-t border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 font-medium">Assigned Organizations:</span>
+                      <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full">
+                        {tenantsInTier.length} active
+                      </span>
+                    </div>
+
+                    {tenantsInTier.length > 0 && (
+                      <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto">
+                        {tenantsInTier.map(t => (
+                          <span key={t.id} className="text-[10px] bg-slate-100 font-semibold text-slate-700 px-2 py-0.5 rounded-md">
+                            {t.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditTierModal(tier)}
+                        className="w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+                      >
+                        <Sliders className="h-3.5 w-3.5 text-slate-600" />
+                        <span>Edit Tier</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAssignTargetPlan(tier.id);
+                          setShowAssignPlanModal(true);
+                        }}
+                        className={`w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 text-xs font-bold text-white rounded-xl shadow-xs transition ${
+                          isPremium ? 'bg-indigo-600 hover:bg-indigo-500' : isEnterprise ? 'bg-purple-600 hover:bg-purple-500' : 'bg-slate-800 hover:bg-slate-700'
+                        }`}
+                      >
+                        <span>Assign</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -923,6 +1181,334 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   className="px-4 py-2 font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-sm"
                 >
                   Save Routing
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Subscription Tier Modal */}
+      {editingTier && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                  <Sliders className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-base">Edit Subscription Tier: {editingTier.id}</h3>
+                  <p className="text-xs text-slate-500">Configure pricing, quota ceilings, features, and SLA parameters</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingTier(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTier} className="space-y-5 text-xs">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Tier Display Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={tierName}
+                    onChange={(e) => setTierName(e.target.value)}
+                    placeholder="e.g. Basic Starter Tier"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Badge / Highlight</label>
+                  <div className="flex items-center space-x-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="isPopularCheck"
+                      checked={tierIsPopular}
+                      onChange={(e) => setTierIsPopular(e.target.checked)}
+                      className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                    />
+                    <label htmlFor="isPopularCheck" className="font-semibold text-slate-700 cursor-pointer">
+                      Mark as "Popular Choice" Badge
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Tagline & Description *</label>
+                <input
+                  type="text"
+                  required
+                  value={tierTagline}
+                  onChange={(e) => setTierTagline(e.target.value)}
+                  placeholder="e.g. Essential school, retail & single-branch starter package"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Pricing Matrix */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">
+                  Pricing & Currency Engine
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Currency</label>
+                    <input
+                      type="text"
+                      required
+                      value={tierCurrency}
+                      onChange={(e) => setTierCurrency(e.target.value.toUpperCase())}
+                      placeholder="KES"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold uppercase focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Monthly Price ({tierCurrency}) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="500"
+                      value={tierMonthlyPrice}
+                      onChange={(e) => setTierMonthlyPrice(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Annual Price ({tierCurrency}) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="1000"
+                      value={tierAnnualPrice}
+                      onChange={(e) => setTierAnnualPrice(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Quotas & Capacity Limits */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">
+                  Platform Capacity & Quotas
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Max Learners / Records *</label>
+                    <input
+                      type="text"
+                      required
+                      value={tierMaxLearners}
+                      onChange={(e) => setTierMaxLearners(e.target.value)}
+                      placeholder="e.g. Up to 300 Learners / Records"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Max Staff Accounts *</label>
+                    <input
+                      type="text"
+                      required
+                      value={tierMaxStaff}
+                      onChange={(e) => setTierMaxStaff(e.target.value)}
+                      placeholder="e.g. 5 Staff / Teacher Accounts"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Cloud Storage (GB) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={tierStorageGB}
+                      onChange={(e) => setTierStorageGB(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <label className="block font-semibold text-slate-700 mb-1">Support & SLA Tier *</label>
+                  <input
+                    type="text"
+                    required
+                    value={tierSupportSLA}
+                    onChange={(e) => setTierSupportSLA(e.target.value)}
+                    placeholder="e.g. Priority WhatsApp & Dedicated Phone Support (2h SLA)"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Feature Matrix Editor */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block font-bold text-slate-700">Included Features Checklist</label>
+                  <span className="text-[11px] text-slate-400 font-semibold">{tierFeatures.length} items</span>
+                </div>
+
+                <div className="space-y-2 mb-3 max-h-48 overflow-y-auto pr-1">
+                  {tierFeatures.map((feat, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                      <div className="flex items-center space-x-2 flex-1 mr-2">
+                        <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="text-slate-800 font-medium">{feat}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteFeature(idx)}
+                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        title="Remove feature"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add new feature input */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={newFeatureInput}
+                    onChange={(e) => setNewFeatureInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddFeature();
+                      }
+                    }}
+                    placeholder="Type new capability (e.g. Real-Time M-Pesa Webhook Gateway)..."
+                    className="flex-1 px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddFeature}
+                    className="inline-flex items-center space-x-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTier(null)}
+                  className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition"
+                >
+                  Save Tier Configuration
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Assign Plan Modal */}
+      {showAssignPlanModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <div className="flex items-center space-x-2 text-indigo-600 mb-1">
+              <Tag className="h-5 w-5" />
+              <h3 className="font-bold text-slate-900 text-base">Assign Subscription Tier</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">
+              Select an institution and apply the corresponding subscription tier entitlement.
+            </p>
+
+            <form onSubmit={handleAssignTenantPlan} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Select Institution *</label>
+                <select
+                  value={assignTargetTenantId}
+                  onChange={(e) => setAssignTargetTenantId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none font-medium"
+                >
+                  {allTenants.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.code}) — Currently on {t.plan}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-2">Select Target Subscription Tier *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {subscriptionTiers.map(tier => (
+                    <button
+                      key={tier.id}
+                      type="button"
+                      onClick={() => setAssignTargetPlan(tier.id)}
+                      className={`p-3 rounded-xl border text-center transition ${
+                        assignTargetPlan === tier.id
+                          ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-600/30'
+                          : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className="font-black text-slate-900 text-xs">{tier.id}</div>
+                      <div className="text-[10px] text-slate-500 mt-1 font-bold">
+                        KES {tier.priceMonthly.toLocaleString()}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview card */}
+              {(() => {
+                const selectedTierConfig = subscriptionTiers.find(t => t.id === assignTargetPlan);
+                return selectedTierConfig ? (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-800">{selectedTierConfig.name}</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md">
+                        {selectedTierConfig.currency} {selectedTierConfig.priceMonthly.toLocaleString()}/mo
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">{selectedTierConfig.tagline}</p>
+                    <div className="text-[10px] text-slate-600 pt-1 font-medium">
+                      Quota: {selectedTierConfig.maxLearnersOrRecords} • {selectedTierConfig.maxStaffAccounts}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              <div className="pt-2 flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAssignPlanModal(false)}
+                  className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-sm"
+                >
+                  Apply Plan Update
                 </button>
               </div>
             </form>

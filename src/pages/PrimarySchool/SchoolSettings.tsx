@@ -19,7 +19,7 @@ import { MAIN_DOMAIN } from '../../types';
 import { LogoUploader } from '../../components/LogoUploader';
 
 export const SchoolSettings: React.FC = () => {
-  const { tenant, updateTenantSettings } = useAuth();
+  const { tenant, updateTenantSettings, subscriptionTiers } = useAuth();
 
   const [name, setName] = useState(tenant?.name || '');
   const [motto, setMotto] = useState(tenant?.motto || '');
@@ -278,6 +278,49 @@ export const SchoolSettings: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Current Subscription Plan Status */}
+        {(() => {
+          const currentPlanConfig = subscriptionTiers?.find(t => t.id === tenant?.plan);
+          return (
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <CreditCard className="h-4 w-4 text-indigo-600" />
+                  <span className="font-bold text-slate-800 text-xs">Current Subscription Plan:</span>
+                  <span className="px-2.5 py-0.5 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-800">
+                    {tenant?.plan || 'BASIC'}
+                  </span>
+                </div>
+                {currentPlanConfig && (
+                  <span className="text-xs font-black text-slate-900">
+                    {currentPlanConfig.currency} {currentPlanConfig.priceMonthly.toLocaleString()}/mo
+                  </span>
+                )}
+              </div>
+
+              {currentPlanConfig && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-600 pt-1">
+                  <div className="bg-white p-2 rounded-xl border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase font-bold">Capacity</span>
+                    <span className="font-semibold text-slate-800">{currentPlanConfig.maxLearnersOrRecords}</span>
+                  </div>
+                  <div className="bg-white p-2 rounded-xl border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase font-bold">Staff Limit</span>
+                    <span className="font-semibold text-slate-800">{currentPlanConfig.maxStaffAccounts}</span>
+                  </div>
+                  <div className="bg-white p-2 rounded-xl border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase font-bold">Support Level</span>
+                    <span className="font-semibold text-slate-800 truncate">{currentPlanConfig.supportSLA}</span>
+                  </div>
+                </div>
+              )}
+              <p className="text-[10px] text-slate-400 italic">
+                To upgrade quotas, activate additional modules, or switch subscription tiers, contact your Davetech platform administrator.
+              </p>
+            </div>
+          );
+        })()}
 
         <div className="border-t border-slate-100 pt-4 flex justify-end">
           <button
