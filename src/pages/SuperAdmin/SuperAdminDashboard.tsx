@@ -33,7 +33,8 @@ import {
   Plus,
   X,
   DollarSign,
-  Settings
+  Settings,
+  Save
 } from 'lucide-react';
 import { Tenant, TenantPlan, TenantStatus, MAIN_DOMAIN, SubscriptionTierConfig } from '../../types';
 import { LogoUploader } from '../../components/LogoUploader';
@@ -67,7 +68,9 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     syncAllDataToFirestore,
     subscriptionTiers,
     updateSubscriptionTier,
-    resetSubscriptionTiers
+    resetSubscriptionTiers,
+    platformSettings,
+    updatePlatformSettings
   } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,6 +84,43 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [editLogoUrlVal, setEditLogoUrlVal] = useState('');
   const [copiedTenantId, setCopiedTenantId] = useState<string | null>(null);
   const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
+
+  // Platform Master Settings & Logo State
+  const [platformNameInput, setPlatformNameInput] = useState(platformSettings?.name || 'DAVETECH');
+  const [platformTaglineInput, setPlatformTaglineInput] = useState(platformSettings?.tagline || 'Enterprise Cloud & Multi-Tenant Engine');
+  const [platformLogoUrlInput, setPlatformLogoUrlInput] = useState(platformSettings?.logoUrl || '');
+  const [platformSupportEmailInput, setPlatformSupportEmailInput] = useState(platformSettings?.supportEmail || 'support@davetech.co.ke');
+  const [platformSupportPhoneInput, setPlatformSupportPhoneInput] = useState(platformSettings?.supportPhone || '+254 700 000 000');
+  const [platformStrictIsolationInput, setPlatformStrictIsolationInput] = useState(platformSettings?.strictIsolationEnforced ?? true);
+  const [platformMpesaSandboxInput, setPlatformMpesaSandboxInput] = useState(platformSettings?.mpesaSandboxEnabled ?? true);
+  const [platformSettingsSaveSuccess, setPlatformSettingsSaveSuccess] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (platformSettings) {
+      setPlatformNameInput(platformSettings.name || 'DAVETECH');
+      setPlatformTaglineInput(platformSettings.tagline || 'Enterprise Cloud & Multi-Tenant Engine');
+      setPlatformLogoUrlInput(platformSettings.logoUrl || '');
+      setPlatformSupportEmailInput(platformSettings.supportEmail || 'support@davetech.co.ke');
+      setPlatformSupportPhoneInput(platformSettings.supportPhone || '+254 700 000 000');
+      setPlatformStrictIsolationInput(platformSettings.strictIsolationEnforced ?? true);
+      setPlatformMpesaSandboxInput(platformSettings.mpesaSandboxEnabled ?? true);
+    }
+  }, [platformSettings]);
+
+  const handleSavePlatformSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updatePlatformSettings({
+      name: platformNameInput.trim() || 'DAVETECH',
+      tagline: platformTaglineInput.trim() || 'Enterprise Cloud & Multi-Tenant Engine',
+      logoUrl: platformLogoUrlInput.trim() || undefined,
+      supportEmail: platformSupportEmailInput.trim(),
+      supportPhone: platformSupportPhoneInput.trim(),
+      strictIsolationEnforced: platformStrictIsolationInput,
+      mpesaSandboxEnabled: platformMpesaSandboxInput
+    });
+    setPlatformSettingsSaveSuccess('Master Platform settings and DAVETECH logo updated successfully!');
+    setTimeout(() => setPlatformSettingsSaveSuccess(null), 4000);
+  };
 
   // Subscription Tier Editing State
   const [editingTier, setEditingTier] = useState<SubscriptionTierConfig | null>(null);
@@ -718,7 +758,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       )}
 
       {/* Subscriptions & Plans Tab */}
-      {currentTab === 'super-admin-plans' && (
+      {(currentTab === 'super-admin-plans' || currentTab === 'super-admin-billing') && (
         <div className="space-y-6">
           {/* Header Action Card */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
@@ -1169,37 +1209,186 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
       {/* Platform Settings Tab */}
       {currentTab === 'super-admin-settings' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Header Card */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex items-center space-x-2 text-indigo-600 mb-1">
-              <Settings className="h-5 w-5" />
-              <h2 className="text-lg font-black text-slate-900">Platform Infrastructure Settings</h2>
-            </div>
-            <p className="text-xs text-slate-500">
-              Configure global environment overrides, master governance controls, and security parameters.
-            </p>
-
-            <div className="mt-6 space-y-4 text-xs">
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="font-bold text-slate-900">Multi-Tenant Isolation Enforcement</div>
-                  <div className="text-slate-500">Strict `tenantId` query filtering across all Firestore collections</div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center space-x-2 text-indigo-600 mb-1">
+                  <Settings className="h-5 w-5" />
+                  <h2 className="text-lg font-black text-slate-900">Platform Settings & Master Brand Identity</h2>
                 </div>
-                <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold rounded-lg text-xs">
-                  ENFORCED
-                </span>
+                <p className="text-xs text-slate-500 max-w-2xl">
+                  Configure global DAVETECH master branding, platform logo, support desk contact coordinates, and multi-tenant security enforcement.
+                </p>
               </div>
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="font-bold text-slate-900">M-Pesa Sandbox Webhook Gateway</div>
-                  <div className="text-slate-500">Automated fee payment STK push callbacks</div>
+              {platformSettingsSaveSuccess && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <span>{platformSettingsSaveSuccess}</span>
                 </div>
-                <span className="px-3 py-1 bg-indigo-100 text-indigo-800 font-bold rounded-lg text-xs">
-                  CONNECTED
-                </span>
-              </div>
+              )}
             </div>
           </div>
+
+          <form onSubmit={handleSavePlatformSettings} className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Logo & Brand Identity */}
+              <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col space-y-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-1 flex items-center space-x-2">
+                    <Sparkles className="h-4 w-4 text-indigo-600" />
+                    <span>Master Brand Logo</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Upload official DAVETECH logo or enter image URL. Displayed across top navigation bar and platform headers.
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <LogoUploader
+                    currentLogoUrl={platformLogoUrlInput}
+                    onLogoChange={setPlatformLogoUrlInput}
+                    entityName={platformNameInput || 'DAVETECH'}
+                    label="DAVETECH Master Platform Logo"
+                  />
+                </div>
+
+                <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl">
+                  <div className="text-[11px] font-bold text-indigo-900 mb-1">Header Preview:</div>
+                  <div className="flex items-center space-x-3 p-2 bg-slate-900 rounded-xl">
+                    {platformLogoUrlInput ? (
+                      <img
+                        src={platformLogoUrlInput}
+                        alt="Logo"
+                        className="h-8 w-8 object-contain rounded-lg bg-white/10 p-0.5"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center font-black text-white text-xs">
+                        {(platformNameInput || 'D').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-xs font-black text-white">{platformNameInput || 'DAVETECH'}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">MASTER PLATFORM</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Platform Metadata & Support Contacts */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center space-x-2">
+                    <Globe className="h-4 w-4 text-indigo-600" />
+                    <span>Brand & Domain Configuration</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Master Platform Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={platformNameInput}
+                        onChange={(e) => setPlatformNameInput(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        placeholder="e.g. DAVETECH"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Tagline / Header Description</label>
+                      <input
+                        type="text"
+                        value={platformTaglineInput}
+                        onChange={(e) => setPlatformTaglineInput(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        placeholder="e.g. Enterprise Cloud & Multi-Tenant Engine"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Support Email Desk</label>
+                      <input
+                        type="email"
+                        value={platformSupportEmailInput}
+                        onChange={(e) => setPlatformSupportEmailInput(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        placeholder="support@davetech.co.ke"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Support Phone / Hot Line</label>
+                      <input
+                        type="text"
+                        value={platformSupportPhoneInput}
+                        onChange={(e) => setPlatformSupportPhoneInput(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        placeholder="+254 700 000 000"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Infrastructure Security Toggles */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center space-x-2">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                    <span>Multi-Tenant Governance & Security Controls</span>
+                  </h3>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-slate-900">Multi-Tenant Isolation Enforcement</div>
+                        <div className="text-slate-500">Strict `tenantId` query filtering across all Firestore collections</div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={platformStrictIsolationInput}
+                          onChange={(e) => setPlatformStrictIsolationInput(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-slate-900">M-Pesa Sandbox Webhook Gateway</div>
+                        <div className="text-slate-500">Automated fee payment STK push callbacks and sandbox testing mode</div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={platformMpesaSandboxInput}
+                          onChange={(e) => setPlatformMpesaSandboxInput(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Action Bar */}
+                <div className="flex items-center justify-end space-x-3 pt-2">
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/30 flex items-center space-x-2 transition"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>Save Platform Settings & Logo</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
       )}
 

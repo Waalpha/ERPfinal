@@ -42,7 +42,8 @@ export const PlatformShell: React.FC = () => {
     firestoreDatabaseName,
     syncAllDataToFirestore,
     logout,
-    switchTenantAsSuperAdmin
+    switchTenantAsSuperAdmin,
+    platformSettings
   } = useAuth();
 
   const [currentTab, setCurrentTab] = useState<string>('super-admin-overview');
@@ -167,19 +168,36 @@ export const PlatformShell: React.FC = () => {
               {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            <div className="h-10 w-10 rounded-xl bg-indigo-600 border border-indigo-500/50 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-600/30 text-lg">
-              D
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-base font-black text-white tracking-tight">DAVETECH</span>
-                <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
-                  MASTER PLATFORM
-                </span>
+            <div
+              onClick={() => setCurrentTab('super-admin-overview')}
+              className="flex items-center space-x-3 cursor-pointer group"
+            >
+              {platformSettings?.logoUrl ? (
+                <div className="h-10 w-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden p-1 shadow-md">
+                  <img
+                    src={platformSettings.logoUrl}
+                    alt={platformSettings.name || 'DAVETECH'}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-10 w-10 rounded-xl bg-indigo-600 border border-indigo-500/50 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-600/30 text-lg">
+                  {(platformSettings?.name || 'D').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-base font-black text-white tracking-tight group-hover:text-indigo-300 transition">
+                    {platformSettings?.name || 'DAVETECH'}
+                  </span>
+                  <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                    MASTER PLATFORM
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
+                  app.{MAIN_DOMAIN_SUFFIX} • {platformSettings?.tagline || 'Enterprise Cloud & Multi-Tenant Engine'}
+                </p>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
-                app.{MAIN_DOMAIN_SUFFIX} • Enterprise Cloud & Multi-Tenant Engine
-              </p>
             </div>
           </div>
 

@@ -39,6 +39,28 @@ export interface SubscriptionTierConfig {
   supportSLA: string;
 }
 
+export interface PlatformSettings {
+  name: string;
+  tagline: string;
+  logoUrl?: string;
+  supportEmail: string;
+  supportPhone: string;
+  mainDomain: string;
+  mpesaSandboxEnabled?: boolean;
+  strictIsolationEnforced?: boolean;
+}
+
+export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
+  name: 'DAVETECH',
+  tagline: 'Enterprise Cloud & Multi-Tenant Engine',
+  logoUrl: '',
+  supportEmail: 'support@davetech.co.ke',
+  supportPhone: '+254 700 000 000',
+  mainDomain: 'davetech.co.ke',
+  mpesaSandboxEnabled: true,
+  strictIsolationEnforced: true
+};
+
 export const DEFAULT_SUBSCRIPTION_TIERS: SubscriptionTierConfig[] = [
   {
     id: 'BASIC',

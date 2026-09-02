@@ -56,7 +56,9 @@ import {
   RetailCustomerInvoice,
   RetailCustomerPayment,
   SubscriptionTierConfig,
-  DEFAULT_SUBSCRIPTION_TIERS
+  DEFAULT_SUBSCRIPTION_TIERS,
+  PlatformSettings,
+  DEFAULT_PLATFORM_SETTINGS
 } from '../types';
 import {
   INITIAL_TENANTS,
@@ -138,6 +140,8 @@ interface AuthContextType {
   subscriptionTiers: SubscriptionTierConfig[];
   updateSubscriptionTier: (tierId: TenantPlan, updates: Partial<SubscriptionTierConfig>) => Promise<void>;
   resetSubscriptionTiers: () => Promise<void>;
+  platformSettings: PlatformSettings;
+  updatePlatformSettings: (updates: Partial<PlatformSettings>) => Promise<void>;
   createPlatformUser: (userData: Omit<AppUser, 'uid' | 'createdAt'>) => Promise<AppUser>;
   updatePlatformUserRole: (userId: string, newRole: UserRole) => Promise<void>;
   toggleUserActiveStatus: (userId: string) => Promise<void>;
@@ -378,6 +382,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fallback
     }
     return DEFAULT_SUBSCRIPTION_TIERS;
+  });
+
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(() => {
+    try {
+      const saved = localStorage.getItem('davetech_platform_settings');
+      if (saved) {
+        return { ...DEFAULT_PLATFORM_SETTINGS, ...JSON.parse(saved) };
+      }
+    } catch {
+      // Fallback
+    }
+    return DEFAULT_PLATFORM_SETTINGS;
   });
 
   // Tenant Collections (Isolated per tenantId)
@@ -690,6 +706,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Storage fallback
     }
     logAuditEvent('SUBSCRIPTION_TIERS_RESET', `Super Admin reset platform subscription tiers to factory defaults`, 'SETTINGS');
+  };
+
+  const updatePlatformSettings = async (updates: Partial<PlatformSettings>) => {
+    setPlatformSettings(prev => {
+      const updated = { ...prev, ...updates };
+      try {
+        localStorage.setItem('davetech_platform_settings', JSON.stringify(updated));
+      } catch {
+        // Storage fallback
+      }
+      return updated;
+    });
+    logAuditEvent('PLATFORM_SETTINGS_UPDATED', `Super Admin updated platform settings & branding: ${Object.keys(updates).join(', ')}`, 'SETTINGS');
+    try {
+      await setDoc(doc(db, 'platform_settings', 'global_branding'), updates, { merge: true });
+    } catch {
+      // Local state fallback
+    }
   };
 
   const toggleTenantModule = async (tenantId: string, moduleId: string) => {
@@ -2371,6 +2405,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subscriptionTiers,
         updateSubscriptionTier,
         resetSubscriptionTiers,
+        platformSettings,
+        updatePlatformSettings,
         createPlatformUser,
         updatePlatformUserRole,
         toggleUserActiveStatus,
