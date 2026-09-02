@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Coins
 } from 'lucide-react';
+import { LogoUploader } from '../../../components/LogoUploader';
 import { Tenant } from '../../../types';
 
 interface CollegeSettingsTabProps {
@@ -167,16 +168,14 @@ export const CollegeSettingsTab: React.FC<CollegeSettingsTabProps> = ({ tenant }
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Institution Crest / Logo URL
-                </label>
-                <input
-                  type="url"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://.../logo.png"
-                  className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none font-mono"
-                />
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                  <LogoUploader
+                    currentLogoUrl={logoUrl}
+                    onLogoChange={(url) => setLogoUrl(url)}
+                    entityName={name || 'Institution'}
+                    label="Institution Crest / Logo"
+                  />
+                </div>
               </div>
 
               <div>

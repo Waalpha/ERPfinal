@@ -21,6 +21,7 @@ import {
   Globe,
   Copy,
   Edit2,
+  Power,
   Cloud,
   Database,
   RefreshCw,
@@ -38,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Tenant, TenantPlan, TenantStatus, MAIN_DOMAIN, SubscriptionTierConfig } from '../../types';
 import { LogoUploader } from '../../components/LogoUploader';
+import { EditTenantModal } from '../../components/EditTenantModal';
 
 interface SuperAdminDashboardProps {
   currentTab: string;
@@ -77,6 +79,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [filterType, setFilterType] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [selectedTenantForModules, setSelectedTenantForModules] = useState<Tenant | null>(null);
+  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [editingSubdomainTenant, setEditingSubdomainTenant] = useState<Tenant | null>(null);
   const [editSubdomainVal, setEditSubdomainVal] = useState('');
   const [editCustomDomainVal, setEditCustomDomainVal] = useState('');
@@ -653,11 +656,24 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => switchTenantAsSuperAdmin(t.id)}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-slate-900 hover:bg-indigo-600 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs"
-                            title="Switch active session into this organization"
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Open Workspace"
                           >
-                            <span>Open</span>
-                            <ExternalLink className="h-3 w-3" />
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setEditingTenant(t)}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Edit Tenant"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => updateTenantStatus(t.id, t.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')}
+                            className={`p-1.5 ${t.status === 'ACTIVE' ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'} rounded-lg transition-colors`}
+                            title={t.status === 'ACTIVE' ? 'Suspend Tenant' : 'Activate Tenant'}
+                          >
+                            <Power className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => {
@@ -1950,6 +1966,13 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             </form>
           </div>
         </div>
+      )}
+      {editingTenant && (
+        <EditTenantModal
+          tenant={editingTenant}
+          onClose={() => setEditingTenant(null)}
+          onSave={updateTenant}
+        />
       )}
     </div>
   );

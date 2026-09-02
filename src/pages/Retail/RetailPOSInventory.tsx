@@ -22,6 +22,7 @@ import {
   Minus,
   Plus
 } from 'lucide-react';
+import { RetailSettingsTab } from './RetailSettingsTab';
 import { RetailProduct, RetailSale, RetailSupplier, RetailCustomer } from '../../types';
 
 interface RetailPOSInventoryProps {
@@ -721,6 +722,11 @@ export const RetailPOSInventory: React.FC<RetailPOSInventoryProps> = ({ currentT
             ))}
           </div>
         </div>
+      )}
+
+      {/* Settings Tab */}
+      {currentTab === 'retail-settings' && (
+        <RetailSettingsTab />
       )}
 
       {/* Printable Receipt Modal */}

@@ -15,6 +15,7 @@ import {
   FileText,
   Clock
 } from 'lucide-react';
+import { HospitalSettingsTab } from './HospitalSettingsTab';
 import { HospitalPatient, MedicalConsultation, PharmacyItem } from '../../types';
 
 interface HospitalManagementProps {
@@ -315,6 +316,11 @@ export const HospitalManagement: React.FC<HospitalManagementProps> = ({ currentT
             ))}
           </div>
         </div>
+      )}
+
+      {/* Settings Tab */}
+      {currentTab === 'hospital-settings' && (
+        <HospitalSettingsTab />
       )}
 
       {/* Patient Modal */}
