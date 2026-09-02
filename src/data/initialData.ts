@@ -1910,6 +1910,12 @@ export const INITIAL_HOSPITAL_PATIENTS: Record<string, HospitalPatient[]> = {
       emergencyContact: '+254 722 456 789 (Wife)',
       bloodGroup: 'O+',
       allergies: 'Penicillin',
+      vitals: {
+        bloodPressure: '135/85',
+        temperature: 37.1,
+        pulseRate: 74,
+        weightKg: 78
+      },
       lastVisitDate: '2025-02-28',
       status: 'DOCTOR_QUEUE'
     },
@@ -1924,6 +1930,12 @@ export const INITIAL_HOSPITAL_PATIENTS: Record<string, HospitalPatient[]> = {
       emergencyContact: '+254 700 890 123 (Mother)',
       bloodGroup: 'B+',
       allergies: 'None known',
+      vitals: {
+        bloodPressure: '118/76',
+        temperature: 36.6,
+        pulseRate: 68,
+        weightKg: 58
+      },
       lastVisitDate: '2025-02-28',
       status: 'PHARMACY'
     }

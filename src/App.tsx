@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { PlatformShell } from './shells/PlatformShell';
 import { TenantShell } from './shells/TenantShell';
 import { TenantNotFound } from './pages/TenantNotFound';
-import { DevDomainBar } from './components/DevDomainBar';
 import { getEffectiveHostname, resolveTenantFromHost } from './services/TenantResolver';
 
 const AppRoot: React.FC = () => {
@@ -20,15 +19,8 @@ const AppRoot: React.FC = () => {
   }, [effectiveHostname, allTenants]);
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Dev & Testing Domain Simulation Bar (Allows instant testing across subdomains) */}
-      <DevDomainBar
-        currentHostname={effectiveHostname}
-        resolvedType={resolution.type}
-        tenantName={resolution.type === 'TENANT' ? resolution.tenant.name : undefined}
-      />
-
-      {/* Strict Shell Separation */}
+    <div className="min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white bg-slate-100">
+      {/* Strict Shell Separation based on Hostname */}
       <div className="flex-1 flex flex-col">
         {resolution.type === 'PLATFORM' && <PlatformShell />}
 

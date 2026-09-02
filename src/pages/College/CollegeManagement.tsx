@@ -24,6 +24,15 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { CollegeDepartment, CollegeCourse, CollegeStudent, LibraryBook, HostelRoom, CollegeFeeStructureItem, CollegeInvoice, CollegePayment } from '../../types';
+import { CollegeSettingsTab } from './components/CollegeSettingsTab';
+import { CollegeExamsTab } from './components/CollegeExamsTab';
+import { CollegeClassesTab } from './components/CollegeClassesTab';
+import { CollegeAttendanceTab } from './components/CollegeAttendanceTab';
+import { CollegeStaffTab } from './components/CollegeStaffTab';
+import { CollegeUsersTab } from './components/CollegeUsersTab';
+import { CollegeReportsTab } from './components/CollegeReportsTab';
+import { CollegeSmsTab } from './components/CollegeSmsTab';
+import { CollegeFinancialReportsTab } from './components/CollegeFinancialReportsTab';
 
 interface CollegeManagementProps {
   currentTab: string;
@@ -991,6 +1000,158 @@ export const CollegeManagement: React.FC<CollegeManagementProps> = ({ currentTab
             ))}
           </div>
         </div>
+      )}
+
+      {/* Classes & Units Tab */}
+      {currentTab === 'college-classes' && <CollegeClassesTab />}
+
+      {/* Attendance Tab */}
+      {currentTab === 'college-attendance' && <CollegeAttendanceTab />}
+
+      {/* Exams & Results Tab */}
+      {currentTab === 'college-exams' && <CollegeExamsTab />}
+
+      {/* Staff & Faculty Tab */}
+      {currentTab === 'college-staff' && <CollegeStaffTab />}
+
+      {/* User Accounts & Roles Tab */}
+      {currentTab === 'college-users' && <CollegeUsersTab />}
+
+      {/* Academic Reports Tab */}
+      {currentTab === 'college-reports' && <CollegeReportsTab />}
+
+      {/* SMS Broadcast Tab */}
+      {currentTab === 'college-sms' && <CollegeSmsTab />}
+
+      {/* Financial Reports Tab */}
+      {currentTab === 'college-financial-reports' && <CollegeFinancialReportsTab />}
+
+      {/* Direct Invoices Subtab */}
+      {currentTab === 'college-invoices' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Student Invoices & Fee Statements</h2>
+              <p className="text-xs text-slate-500">Term tuition billings and ledger debits</p>
+            </div>
+            <button
+              onClick={() => setShowGenerateInvoiceModal(true)}
+              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center space-x-1.5"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Raise Invoice</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                <tr>
+                  <th className="py-3 px-4">Invoice No</th>
+                  <th className="py-3 px-4">Student</th>
+                  <th className="py-3 px-4">Due Date</th>
+                  <th className="py-3 px-4 text-right">Amount</th>
+                  <th className="py-3 px-4 text-right">Balance</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {safeInvoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-mono font-bold text-slate-900">{inv.invoiceNo}</td>
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-slate-900">{inv.studentName}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">{inv.studentRegNo}</div>
+                    </td>
+                    <td className="py-3 px-4">{inv.dueDate}</td>
+                    <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
+                      KES {inv.totalAmount.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-amber-600">
+                      KES {inv.balance.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        inv.status === 'PAID' ? 'bg-emerald-50 text-emerald-700' :
+                        inv.status === 'PARTIAL' ? 'bg-blue-50 text-blue-700' :
+                        'bg-amber-50 text-amber-700'
+                      }`}>
+                        {inv.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Direct Payments Subtab */}
+      {currentTab === 'college-payments' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Recorded Tuition Receipts & M-Pesa Collections</h2>
+              <p className="text-xs text-slate-500">Live transaction ledger with printable receipts</p>
+            </div>
+            <button
+              onClick={() => setShowRecordPaymentModal(true)}
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center space-x-1.5"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Record Fee Payment</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                <tr>
+                  <th className="py-3 px-4">Receipt No</th>
+                  <th className="py-3 px-4">Student</th>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Method & Ref</th>
+                  <th className="py-3 px-4 text-right">Amount Paid</th>
+                  <th className="py-3 px-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {safePayments.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-mono font-bold text-indigo-700">{p.receiptNo}</td>
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-slate-900">{p.studentName}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">{p.studentRegNo}</div>
+                    </td>
+                    <td className="py-3 px-4">{p.paymentDate}</td>
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-slate-800">{p.paymentMethod}</div>
+                      <div className="text-[11px] font-mono text-slate-500">{p.reference}</div>
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-emerald-600">
+                      KES {p.amount.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => setSelectedPaymentForReceipt(p)}
+                        className="px-2.5 py-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition inline-flex items-center space-x-1"
+                      >
+                        <Printer className="w-3 h-3" />
+                        <span>Receipt</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* College Settings & Branding Tab */}
+      {currentTab === 'college-settings' && tenant && (
+        <CollegeSettingsTab tenant={tenant} />
       )}
 
       {/* Modals */}

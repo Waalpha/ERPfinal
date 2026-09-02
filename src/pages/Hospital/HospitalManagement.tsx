@@ -223,7 +223,13 @@ export const HospitalManagement: React.FC<HospitalManagementProps> = ({ currentT
                         </span>
                       </td>
                       <td className="py-3 px-4 font-mono text-slate-700">
-                        BP: {p.vitals.bloodPressure} | {p.vitals.temperature}°C | {p.vitals.weightKg}kg
+                        {p.vitals ? (
+                          <span>
+                            BP: {p.vitals.bloodPressure || '120/80'} | {p.vitals.temperature || 36.8}°C | {p.vitals.weightKg || '--'}kg
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-sans text-[11px] italic">Vitals Pending</span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">

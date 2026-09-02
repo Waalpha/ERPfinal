@@ -976,19 +976,29 @@ export interface RetailCustomerPayment {
 }
 
 // HOSPITAL & CLINICAL TYPES
+export interface PatientVitals {
+  bloodPressure?: string;
+  temperature?: number;
+  pulseRate?: number;
+  weightKg?: number;
+  respiratoryRate?: number;
+  oxygenSaturation?: number;
+}
+
 export interface HospitalPatient {
   id: string;
   tenantId: string;
   patientNo: string;
   fullName: string;
-  gender: 'Male' | 'Female' | 'Other';
+  gender: 'Male' | 'Female' | 'Other' | 'MALE' | 'FEMALE' | 'OTHER';
   age: number;
   phone: string;
-  emergencyContact: string;
+  emergencyContact?: string;
   bloodGroup: string;
   allergies?: string;
+  vitals?: PatientVitals;
   lastVisitDate: string;
-  status: 'TRIAGE' | 'DOCTOR_QUEUE' | 'PHARMACY' | 'DISCHARGED' | 'ADMITTED';
+  status: 'TRIAGE' | 'DOCTOR_QUEUE' | 'PHARMACY' | 'DISCHARGED' | 'ADMITTED' | 'WAITING';
 }
 
 export interface MedicalConsultation {
