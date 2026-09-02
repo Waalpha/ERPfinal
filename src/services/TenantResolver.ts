@@ -69,11 +69,17 @@ export function resolveTenantFromHost(
       return { type: 'PLATFORM', hostname: cleanHost };
     }
 
+    const cleanSub = subdomain.trim();
+    const cleanSubNormalized = cleanSub.replace(/[\s-_]/g, '');
+
     const matchedTenant = tenantsList.find(
       (t) =>
-        t.subdomain?.toLowerCase() === subdomain ||
-        t.code?.toLowerCase() === subdomain ||
-        t.id?.toLowerCase() === `tenant-${subdomain}`
+        t.subdomain?.toLowerCase() === cleanSub ||
+        t.subdomain?.toLowerCase().replace(/[\s-_]/g, '') === cleanSubNormalized ||
+        t.code?.toLowerCase() === cleanSub ||
+        t.code?.toLowerCase().replace(/[\s-_]/g, '') === cleanSubNormalized ||
+        t.id?.toLowerCase() === `tenant-${cleanSub}` ||
+        t.id?.toLowerCase().replace(/[\s-_]/g, '') === `tenant-${cleanSubNormalized}`
     );
 
     if (matchedTenant) {

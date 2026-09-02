@@ -461,6 +461,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 <option value="PRIMARY_SCHOOL">Primary School</option>
                 <option value="SECONDARY_SCHOOL">Secondary School</option>
                 <option value="COLLEGE">College / University</option>
+                <option value="THEOLOGICAL">Theological Seminary</option>
                 <option value="RETAIL">Retail / Shop</option>
                 <option value="BUSINESS">Wholesale / Business</option>
                 <option value="HOSPITAL">Hospital / Clinic</option>

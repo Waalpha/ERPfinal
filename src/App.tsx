@@ -3,7 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { PlatformShell } from './shells/PlatformShell';
 import { TenantShell } from './shells/TenantShell';
 import { TenantNotFound } from './pages/TenantNotFound';
-import { getEffectiveHostname, resolveTenantFromHost } from './services/TenantResolver';
+import { getEffectiveHostname, resolveTenantFromHost, isPreviewOrLocalEnv } from './services/TenantResolver';
+import { DevDomainBar } from './components/DevDomainBar';
 
 const AppRoot: React.FC = () => {
   const { allTenants } = useAuth();

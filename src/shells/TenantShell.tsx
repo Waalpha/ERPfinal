@@ -33,18 +33,10 @@ import {
   Award
 } from 'lucide-react';
 import { navigateToPlatform, MAIN_DOMAIN_SUFFIX } from '../services/TenantResolver';
+import { getNavigationForTenant, normalizeTenantType, NavSection } from '../services/ModuleRegistry';
 
 interface TenantShellProps {
   tenant: Tenant;
-}
-
-interface NavSection {
-  title?: string;
-  items: {
-    id: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-  }[];
 }
 
 export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
@@ -54,15 +46,19 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
     switchUserPersona,
     students,
     collegeStudents,
-    collegeCourses
+    collegeCourses,
+    theologyStudents,
+    theologyPrograms
   } = useAuth();
+
+  const tType = normalizeTenantType(tenant.type);
 
   // Determine initial tab based on tenant type
   const [currentTab, setCurrentTab] = useState<string>(() => {
-    if (tenant.type === 'COLLEGE' || tenant.type === 'UNIVERSITY') return 'college-overview';
-    if (tenant.type === 'THEOLOGY_SEMINARY') return 'theology-overview';
-    if (tenant.type === 'RETAIL' || tenant.type === 'BUSINESS' || tenant.type === 'WHOLESALE') return 'retail-pos';
-    if (tenant.type === 'HOSPITAL') return 'hospital-overview';
+    if (tType === 'COLLEGE') return 'college-overview';
+    if (tType === 'THEOLOGICAL') return 'theology-overview';
+    if (tType === 'BUSINESS') return 'retail-pos';
+    if (tType === 'HOSPITAL') return 'hospital-overview';
     return 'school-overview';
   });
 
@@ -75,148 +71,27 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
     (u) => u && (u.tenantId === tenant?.id || u.role === 'SUPER_ADMIN')
   );
 
-  // Grouped sidebar navigation based on tenant type
-  const getNavSections = (): NavSection[] => {
-    if (tenant.type === 'COLLEGE' || tenant.type === 'UNIVERSITY') {
-      return [
-        {
-          title: 'ACADEMICS',
-          items: [
-            { id: 'college-overview', label: 'Dashboard', icon: GraduationCap },
-            { id: 'college-students', label: 'Students & Admissions', icon: Users },
-            { id: 'college-departments', label: 'Departments & Faculties', icon: Building2 },
-            { id: 'college-courses', label: 'Courses & Programs', icon: BookA },
-            { id: 'college-classes', label: 'Classes & Units', icon: BookOpen },
-            { id: 'college-attendance', label: 'Attendance', icon: Calendar },
-            { id: 'college-exams', label: 'Exams & Results', icon: Award }
-          ]
-        },
-        {
-          title: 'FINANCE',
-          items: [
-            { id: 'college-fees', label: 'Fees & Finance', icon: Receipt },
-            { id: 'college-payments', label: 'Payments', icon: CreditCard },
-            { id: 'college-invoices', label: 'Invoices', icon: Receipt },
-            { id: 'college-financial-reports', label: 'Financial Reports', icon: FileText }
-          ]
-        },
-        {
-          title: 'CAMPUS',
-          items: [
-            { id: 'college-library', label: 'Library', icon: Library },
-            { id: 'college-hostel', label: 'Hostel & Housing', icon: BedDouble },
-            { id: 'college-sms', label: 'Communication / SMS', icon: Bell }
-          ]
-        },
-        {
-          title: 'PEOPLE',
-          items: [
-            { id: 'college-staff', label: 'Staff & Faculty', icon: UserCheck },
-            { id: 'college-users', label: 'Users & Roles', icon: Shield }
-          ]
-        },
-        {
-          title: 'REPORTS',
-          items: [
-            { id: 'college-reports', label: 'Academic Reports', icon: FileText }
-          ]
-        },
-        {
-          title: 'ADMINISTRATION',
-          items: [
-            { id: 'college-settings', label: 'College Settings', icon: Settings }
-          ]
-        }
-      ];
-    }
-
-    if (tenant.type === 'THEOLOGY_SEMINARY') {
-      return [
-        {
-          title: 'SEMINARY CORE',
-          items: [
-            { id: 'theology-overview', label: 'Seminary Dashboard', icon: BookOpen },
-            { id: 'theology-programs', label: 'Degree Programs & Units', icon: BookA },
-            { id: 'theology-students', label: 'Divinity Students', icon: Users },
-            { id: 'theology-practicum', label: 'Ministry Practicum Logs', icon: Sparkles },
-            { id: 'theology-library', label: 'Theological Library', icon: Library },
-            { id: 'theology-fees', label: 'Invoicing & Tithing', icon: Receipt },
-            { id: 'theology-settings', label: 'Seminary Settings', icon: Settings }
-          ]
-        }
-      ];
-    }
-
-    if (tenant.type === 'RETAIL' || tenant.type === 'BUSINESS' || tenant.type === 'WHOLESALE') {
-      return [
-        {
-          title: 'COMMERCE',
-          items: [
-            { id: 'retail-pos', label: 'POS Terminal / Sales', icon: ShoppingBag },
-            { id: 'retail-inventory', label: 'Stock & Inventory', icon: Layers },
-            { id: 'retail-suppliers', label: 'Suppliers & Purchases', icon: Building2 },
-            { id: 'retail-customers', label: 'B2B Invoices & Debtors', icon: Receipt },
-            { id: 'retail-reports', label: 'Sales Reports & Analytics', icon: FileText },
-            { id: 'retail-settings', label: 'Store Settings', icon: Settings }
-          ]
-        }
-      ];
-    }
-
-    if (tenant.type === 'HOSPITAL') {
-      return [
-        {
-          title: 'CLINICAL SERVICES',
-          items: [
-            { id: 'hospital-overview', label: 'Clinical Dashboard', icon: HeartPulse },
-            { id: 'hospital-patients', label: 'Patients & Admissions', icon: Users },
-            { id: 'hospital-consultations', label: 'Doctor Consultations', icon: UserCheck },
-            { id: 'hospital-pharmacy', label: 'Pharmacy & Dispensing', icon: Layers },
-            { id: 'hospital-billing', label: 'Billing & Invoices', icon: Receipt },
-            { id: 'hospital-settings', label: 'Hospital Settings', icon: Settings }
-          ]
-        }
-      ];
-    }
-
-    // Default: Primary / Secondary School (CBC)
-    return [
-      {
-        title: 'ACADEMICS & LEARNERS',
-        items: [
-          { id: 'school-overview', label: 'Overview / Dashboard', icon: School },
-          { id: 'school-students', label: 'Learners & Admissions', icon: Users },
-          { id: 'school-cbc', label: 'CBC Academics & Strands', icon: BookOpen },
-          { id: 'school-assessments', label: 'Formative Assessments', icon: CheckCircle2 },
-          { id: 'school-classes', label: 'Classes & Streams', icon: Building2 },
-          { id: 'school-timetable', label: 'Timetable & Schedule', icon: Calendar },
-          { id: 'school-assignments', label: 'Homework & Tasks', icon: BookA }
-        ]
-      },
-      {
-        title: 'FINANCE & OPERATIONS',
-        items: [
-          { id: 'school-fees', label: 'Fee Structure & Receipts', icon: CreditCard },
-          { id: 'school-attendance', label: 'Attendance Tracking', icon: Calendar },
-          { id: 'school-staff', label: 'Teachers & Staff', icon: UserCheck },
-          { id: 'school-discipline', label: 'Discipline & Pastoral', icon: Shield },
-          { id: 'school-calendar', label: 'Term Calendar & Events', icon: Calendar },
-          { id: 'school-sms', label: 'Bulk SMS Broadcasts', icon: Bell },
-          { id: 'school-reports', label: 'CBC Report Card Generator', icon: FileText },
-          { id: 'school-settings', label: 'School Settings', icon: Settings }
-        ]
-      }
-    ];
-  };
-
-  const navSections = getNavSections();
+  // Grouped sidebar navigation based on tenant type from ModuleRegistry
+  const navSections = getNavigationForTenant(tenant);
 
   // Search Results scoped to this tenant
   const searchResults = React.useMemo(() => {
     if (!tenantSearchQuery.trim()) return [];
     const q = tenantSearchQuery.toLowerCase();
 
-    if (tenant.type === 'COLLEGE' || tenant.type === 'UNIVERSITY') {
+    if (tType === 'THEOLOGICAL') {
+      const matchedSeminarians = (theologyStudents || [])
+        .filter((s) => s.fullName.toLowerCase().includes(q) || s.regNo.toLowerCase().includes(q))
+        .map((s) => ({ id: s.id, title: s.fullName, sub: `Reg: ${s.regNo} • ${s.programTitle}`, tab: 'theology-students' }));
+
+      const matchedPrograms = (theologyPrograms || [])
+        .filter((p) => p.title.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
+        .map((p) => ({ id: p.id, title: p.title, sub: `Code: ${p.code} • Level: ${p.level}`, tab: 'theology-programs' }));
+
+      return [...matchedSeminarians, ...matchedPrograms];
+    }
+
+    if (tType === 'COLLEGE') {
       const matchedStudents = (collegeStudents || [])
         .filter((s) => s.fullName.toLowerCase().includes(q) || s.regNo.toLowerCase().includes(q))
         .map((s) => ({ id: s.id, title: s.fullName, sub: `Reg: ${s.regNo} • ${s.courseName}`, tab: 'college-students' }));
@@ -237,7 +112,7 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
         sub: `Adm: ${s.admissionNo} • Grade: ${s.grade || 'CBC'}`,
         tab: 'school-students'
       }));
-  }, [tenantSearchQuery, tenant.type, collegeStudents, collegeCourses, students]);
+  }, [tenantSearchQuery, tType, theologyStudents, theologyPrograms, collegeStudents, collegeCourses, students]);
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans antialiased text-slate-900 selection:bg-indigo-500 selection:text-white">
@@ -333,6 +208,17 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
             </div>
 
             {/* Quick Action Button */}
+            {tType === 'THEOLOGICAL' && (
+              <button
+                onClick={() => setCurrentTab('theology-students')}
+                className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-xl shadow-xs transition"
+                style={tenant.primaryColor ? { backgroundColor: tenant.primaryColor } : undefined}
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Admit Seminarian</span>
+              </button>
+            )}
+
             {(tenant.type === 'COLLEGE' || tenant.type === 'PRIMARY_SCHOOL') && (
               <button
                 onClick={() => setCurrentTab(tenant.type === 'COLLEGE' ? 'college-students' : 'school-students')}
@@ -345,27 +231,29 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
             )}
 
             {/* User Persona & Role Selector */}
-            <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
-              <select
-                value={user?.uid || ''}
-                onChange={(e) => switchUserPersona(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-2.5 py-1.5 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[150px] sm:max-w-[200px] truncate cursor-pointer"
-                title="Active Tenant User Persona"
-              >
-                {tenantUsers.map((u) => (
-                  <option key={u.uid} value={u.uid}>
-                    {u.displayName} ({u.role})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {import.meta.env.DEV && (
+              <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
+                <select
+                  value={user?.uid || ''}
+                  onChange={(e) => switchUserPersona(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-2.5 py-1.5 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[150px] sm:max-w-[200px] truncate cursor-pointer"
+                  title="Active Tenant User Persona (Dev Only)"
+                >
+                  {tenantUsers.map((u) => (
+                    <option key={u.uid} value={u.uid}>
+                      {u.displayName} ({u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Return to Master Platform if Super Admin */}
-            {user?.role === 'SUPER_ADMIN' && (
+            {user?.role === 'SUPER_ADMIN' && import.meta.env.DEV && (
               <button
                 onClick={() => navigateToPlatform()}
                 className="px-2.5 py-1.5 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-xs"
-                title="Return to Master Super Admin Platform (app.davetech.co.ke)"
+                title="Return to Master Super Admin Platform (Dev Only)"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Master Platform</span>

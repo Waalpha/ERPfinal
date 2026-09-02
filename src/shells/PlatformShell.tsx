@@ -114,13 +114,15 @@ export const PlatformShell: React.FC = () => {
       defaultModules = ['HOSPITAL_CLINIC', 'PHARMACY', 'STAFF', 'FEES_FINANCE', 'REPORTS', 'SMS_NOTIFICATIONS'];
     } else if (newTenantType === 'COLLEGE' || newTenantType === 'UNIVERSITY') {
       defaultModules = ['STUDENTS', 'COURSES', 'DEPARTMENTS', 'FEES_FINANCE', 'LIBRARY', 'HOSTEL', 'STAFF', 'REPORTS', 'SMS_NOTIFICATIONS'];
+    } else if (newTenantType === 'THEOLOGICAL') {
+      defaultModules = ['STUDENTS', 'COURSES', 'DEPARTMENTS', 'FEES_FINANCE', 'LIBRARY', 'STAFF', 'REPORTS', 'SMS_NOTIFICATIONS'];
     }
 
     const finalSubdomain =
       newTenantSubdomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') ||
       newTenantName.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    await createTenant({
+    const newTenant = await createTenant({
       name: newTenantName,
       code: newTenantCode.toUpperCase(),
       subdomain: finalSubdomain,
@@ -145,6 +147,10 @@ export const PlatformShell: React.FC = () => {
     setNewTenantLogoUrl('');
     setNewTenantSubdomain('');
     setIsSubdomainManual(false);
+    setCurrentTab('super-admin-tenants');
+    if (newTenant && newTenant.id) {
+      switchTenantAsSuperAdmin(newTenant.id);
+    }
   };
 
   return (
@@ -397,6 +403,7 @@ export const PlatformShell: React.FC = () => {
                   >
                     <option value="PRIMARY_SCHOOL">Primary / Secondary School (CBC)</option>
                     <option value="COLLEGE">Higher Education / College / TVET</option>
+                    <option value="THEOLOGICAL">Theological Seminary / Bible College</option>
                     <option value="RETAIL">Retail / Wholesale / POS Hub</option>
                     <option value="HOSPITAL">Hospital / Clinical Centre</option>
                   </select>

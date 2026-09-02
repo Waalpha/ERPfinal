@@ -13,6 +13,7 @@ export type TenantType =
   | 'SECONDARY_SCHOOL' 
   | 'COLLEGE' 
   | 'UNIVERSITY' 
+  | 'THEOLOGICAL'
   | 'HOSPITAL' 
   | 'BUSINESS' 
   | 'RETAIL';
@@ -135,8 +136,11 @@ export interface Tenant {
   address?: string;
   country?: string;
   currency: string;
-  currentTerm: 'TERM_1' | 'TERM_2' | 'TERM_3';
+  currentTerm: 'TERM_1' | 'TERM_2' | 'TERM_3' | 'SEMESTER_1' | 'SEMESTER_2' | 'SEMESTER_3';
   currentAcademicYear: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  favicon?: string;
   ownerUid?: string;
   stats?: {
     studentCount?: number;

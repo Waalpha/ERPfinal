@@ -174,209 +174,31 @@ export const Header: React.FC<HeaderProps> = ({
               <Menu className="h-5 w-5 text-indigo-400" />
             </button>
 
-            <button
-              onClick={() => {
-                switchToPlatformMaster();
-                if (onNavigateTab) onNavigateTab('super-admin-overview');
-              }}
-              className="flex items-center space-x-2 sm:space-x-3 text-left group hover:opacity-90 transition-opacity flex-shrink-0"
-              title="Return to DAVETECH Master Platform"
-            >
-              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center font-black text-white text-lg sm:text-xl shadow-md ring-1 ring-white/20">
-                D
+            {/* Tenant Brand Display */}
+            <div className="flex items-center space-x-2 sm:space-x-3 text-left">
+              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-indigo-600 flex items-center justify-center overflow-hidden shadow-md ring-1 ring-white/20">
+                {tenant?.logoUrl ? (
+                  <img src={tenant.logoUrl} alt={tenant.name} className="h-full w-full object-cover" />
+                ) : (
+                  <Building2 className="h-5 w-5 text-white" />
+                )}
               </div>
               <div className="hidden md:block">
                 <div className="flex items-center space-x-2">
-                  <span className="font-bold text-base tracking-tight text-white group-hover:text-indigo-300 transition-colors">
-                    DAVETECH
+                  <span className="font-bold text-base tracking-tight text-white">
+                    {tenant?.name}
                   </span>
+                </div>
+                <div className="flex items-center space-x-2">
                   <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                    MAIN PLATFORM
+                    {tenant?.type}
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    {tenant?.subdomain}.davetech.co.ke
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-medium">Enterprise Cloud & Multi-Tenant Engine</p>
               </div>
-            </button>
-
-            <div className="h-6 w-px bg-slate-800 hidden xl:block" />
-
-            {/* Platform Master vs Hosted Tenant Scope Selector */}
-            <div className="relative flex-shrink min-w-0">
-              <button
-                id="tenant-dropdown-trigger"
-                onClick={() => {
-                  setIsTenantOpen(!isTenantOpen);
-                  setIsPersonaOpen(false);
-                  setIsUserMenuOpen(false);
-                  setIsAttentionOpen(false);
-                }}
-                className={`flex items-center space-x-2 sm:space-x-2.5 px-2 sm:px-3 py-1.5 rounded-lg border transition-all text-left group max-w-[170px] xs:max-w-[200px] sm:max-w-none ${
-                  isPlatformMode
-                    ? 'bg-indigo-950/60 hover:bg-indigo-900/60 border-indigo-700/80 text-white shadow-sm'
-                    : 'bg-slate-800/90 hover:bg-slate-800 border-slate-700 text-slate-200'
-                }`}
-              >
-                <div className={`h-6 w-6 rounded flex items-center justify-center border flex-shrink-0 overflow-hidden ${
-                  isPlatformMode
-                    ? 'bg-indigo-600 text-white border-indigo-400/40'
-                    : 'bg-indigo-600/30 text-indigo-400 border-indigo-500/30'
-                }`}>
-                  {isPlatformMode ? (
-                    <Sparkles className="h-3.5 w-3.5" />
-                  ) : tenant?.logoUrl ? (
-                    <img src={tenant.logoUrl} alt={tenant.name} className="h-full w-full object-contain p-0.5" />
-                  ) : tenant?.type === 'PRIMARY_SCHOOL' ? (
-                    <GraduationCap className="h-3.5 w-3.5" />
-                  ) : (
-                    <Building2 className="h-3.5 w-3.5" />
-                  )}
-                </div>
-                <div className="max-w-[90px] sm:max-w-[160px] md:max-w-[200px] truncate">
-                  {isPlatformMode ? (
-                    <>
-                      <div className="text-xs font-bold text-indigo-200 flex items-center space-x-1 truncate">
-                        <span>DAVETECH Master</span>
-                      </div>
-                      <div className="text-[10px] text-indigo-300/80 hidden xs:flex items-center space-x-1">
-                        <span className="font-mono">{allTenants.length} Tenants</span>
-                        <span>•</span>
-                        <span className="text-emerald-400 font-semibold">HQ</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-xs font-semibold text-slate-100 truncate">{tenant?.name}</div>
-                      <div className="text-[10px] text-slate-400 hidden xs:flex items-center space-x-1 font-mono">
-                        <span className="text-indigo-400 font-bold">{tenant?.subdomain || tenant?.code?.toLowerCase()}.davetech.co.ke</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-white transition-colors flex-shrink-0" />
-              </button>
-
-              {isTenantOpen && (
-                <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-84 bg-slate-900 rounded-xl shadow-2xl border border-slate-700 py-2 z-50 animate-in fade-in zoom-in-95">
-                  {/* Section 1: Main Platform HQ */}
-                  <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-300 flex items-center justify-between">
-                    <span>Main Platform</span>
-                    <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-1 py-0.5 rounded font-mono">DAVETECH HQ</span>
-                  </div>
-                  <div className="p-1.5">
-                    <button
-                      onClick={() => {
-                        switchToPlatformMaster();
-                        setIsTenantOpen(false);
-                        if (onNavigateTab) onNavigateTab('super-admin-overview');
-                      }}
-                      className={`w-full px-3 py-2.5 rounded-lg text-left flex items-center justify-between transition-colors ${
-                        isPlatformMode
-                          ? 'bg-indigo-600 text-white font-semibold shadow-md'
-                          : 'hover:bg-slate-800 text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2.5 min-w-0">
-                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 ${
-                          isPlatformMode ? 'bg-white/20 text-white' : 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
-                        }`}>
-                          ⚡
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold truncate">DAVETECH Main Platform Hub</div>
-                          <div className={`text-[11px] truncate ${isPlatformMode ? 'text-indigo-100' : 'text-slate-400'}`}>
-                            Master Multi-Tenant Governance & Fleet
-                          </div>
-                        </div>
-                      </div>
-                      {isPlatformMode && <Check className="h-4 w-4 text-white flex-shrink-0" />}
-                    </button>
-                  </div>
-
-                  {/* Section 2: Hosted Client Tenant Organizations */}
-                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between border-t border-slate-800 mt-1 bg-slate-950/40">
-                    <span>Hosted Client Tenants ({allTenants.length})</span>
-                    <span className="text-[9px] text-slate-400 font-mono">Isolated DBs</span>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60 p-1">
-                    {allTenants.map((t) => {
-                      const isCurrent = !isPlatformMode && t.id === tenant?.id;
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            switchTenantAsSuperAdmin(t.id);
-                            setIsTenantOpen(false);
-                            if (onNavigateTab) {
-                              if (t.type === 'PRIMARY_SCHOOL' || t.type === 'SECONDARY_SCHOOL') onNavigateTab('school-overview');
-                              else if (t.type === 'COLLEGE' || t.type === 'UNIVERSITY') onNavigateTab('college-overview');
-                              else if (t.type === 'RETAIL' || t.type === 'BUSINESS') onNavigateTab('retail-pos');
-                              else if (t.type === 'HOSPITAL') onNavigateTab('hospital-overview');
-                            }
-                          }}
-                          className={`w-full px-3 py-2 text-left flex items-center justify-between rounded-lg hover:bg-slate-800/80 transition-colors ${
-                            isCurrent ? 'bg-indigo-950/40 border border-indigo-500/50' : ''
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="h-8 w-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 font-bold text-xs flex-shrink-0 border border-slate-700 overflow-hidden">
-                              {t.logoUrl ? (
-                                <img src={t.logoUrl} alt={t.name} className="h-full w-full object-contain p-0.5" />
-                              ) : t.type === 'PRIMARY_SCHOOL' ? (
-                                '🏫'
-                              ) : t.type === 'HOSPITAL' ? (
-                                '🏥'
-                              ) : t.type === 'RETAIL' ? (
-                                '🛒'
-                              ) : (
-                                '🏢'
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-xs font-semibold text-slate-100 truncate">{t.name}</div>
-                              <div className="text-[11px] text-slate-400 flex items-center space-x-1.5 font-mono">
-                                <span className="text-indigo-400 font-medium truncate">{t.subdomain || t.code.toLowerCase()}.davetech.co.ke</span>
-                                <span>•</span>
-                                <span className="text-slate-300 font-sans text-[10px]">{t.plan}</span>
-                              </div>
-                            </div>
-                          </div>
-                          {isCurrent && <Check className="h-4 w-4 text-indigo-400 flex-shrink-0" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {isSuperAdmin && onOpenCreateTenant && (
-                    <div className="p-2 border-t border-slate-800 mt-1">
-                      <button
-                        onClick={() => {
-                          setIsTenantOpen(false);
-                          onOpenCreateTenant();
-                        }}
-                        className="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-sm"
-                      >
-                        <PlusCircle className="h-4 w-4" />
-                        <span>Provision New Tenant on Davetech</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
-
-            {/* Quick Button to Return to DAVETECH Main Platform if inside a tenant */}
-            {!isPlatformMode && (
-              <button
-                onClick={() => {
-                  switchToPlatformMaster();
-                  if (onNavigateTab) onNavigateTab('super-admin-overview');
-                }}
-                className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all"
-                title="Return to DAVETECH Master Platform"
-              >
-                <span>← DAVETECH Main</span>
-              </button>
-            )}
           </div>
 
           {/* Global Search Bar (Direct trigger) */}

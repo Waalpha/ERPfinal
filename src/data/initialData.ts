@@ -90,13 +90,51 @@ export const INITIAL_TENANTS: Tenant[] = [
     }
   },
   {
+    id: 'tenant-injiri-nyeri',
+    name: 'Injiri Centre Nyeri',
+    code: 'INJIRI-THEO',
+    subdomain: 'injiricentr enyeri',
+    customDomain: 'theology.injiricentre.ac.ke',
+    dnsStatus: 'CONFIGURED',
+    type: 'THEOLOGICAL',
+    status: 'ACTIVE',
+    createdAt: '2024-01-10T08:00:00.000Z',
+    plan: 'ENTERPRISE',
+    modules: [
+      'STUDENTS',
+      'THEOLOGY',
+      'FEES_FINANCE',
+      'LIBRARY',
+      'STAFF',
+      'REPORTS',
+      'SMS_NOTIFICATIONS'
+    ],
+    logoUrl: 'https://images.unsplash.com/photo-1548625361-195feee10fce?w=160&auto=format&fit=crop&q=80',
+    motto: 'Advancing Word, Truth and Biblical Ministry in Mount Kenya Region',
+    contactEmail: 'admissions@injiricentre.ac.ke',
+    phone: '+254 712 345 678',
+    address: 'Kiganjo Road, Nyeri Town, Nyeri County, Kenya',
+    country: 'Kenya',
+    currency: 'KES',
+    currentTerm: 'TERM_1',
+    currentAcademicYear: '2025/2026',
+    primaryColor: '#d97706',
+    secondaryColor: '#4f46e5',
+    stats: {
+      studentCount: 180,
+      staffCount: 14,
+      totalFeeCollected: 5400000,
+      totalFeeBalance: 720000
+    }
+  },
+  {
     id: 'tenant-berea-theology',
     name: "St. Paul's Theological College & Divinity Seminary",
     code: 'SPT-THEO',
     subdomain: 'stpaulstheo',
     customDomain: 'portal.stpaulstheo.ac.ke',
     dnsStatus: 'CONFIGURED',
-    type: 'COLLEGE',
+    type: 'THEOLOGICAL',
     status: 'ACTIVE',
     createdAt: '2024-02-20T08:30:00.000Z',
     plan: 'ENTERPRISE',
@@ -121,6 +159,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     currency: 'KES',
     currentTerm: 'TERM_1',
     currentAcademicYear: '2025',
+    primaryColor: '#d97706',
+    secondaryColor: '#4f46e5',
     stats: {
       studentCount: 340,
       staffCount: 28,
@@ -163,32 +203,6 @@ export const INITIAL_TENANTS: Tenant[] = [
       staffCount: 24,
       totalFeeCollected: 5120000,
       totalFeeBalance: 860000
-    }
-  },
-  {
-    id: 'tenant-kca-college',
-    name: 'KCA Metropolitan College & Institute',
-    code: 'KCA-COL',
-    subdomain: 'kcacollege',
-    customDomain: 'erp.kcacollege.ac.ke',
-    dnsStatus: 'CONFIGURED',
-    type: 'COLLEGE',
-    status: 'ACTIVE',
-    createdAt: '2024-04-10T09:00:00.000Z',
-    plan: 'ENTERPRISE',
-    modules: ['STUDENTS', 'COURSES', 'DEPARTMENTS', 'FEES', 'LIBRARY', 'HOSTEL', 'STAFF', 'REPORTS'],
-    currency: 'KES',
-    currentTerm: 'TERM_1',
-    currentAcademicYear: '2025',
-    motto: 'Advancing Technology, Innovation and Business Acumen',
-    contactEmail: 'admissions@kcacollege.ac.ke',
-    phone: '+254 700 888 999',
-    address: 'Thika Superhighway, Ruaraka, Nairobi, Kenya',
-    stats: {
-      studentCount: 640,
-      staffCount: 45,
-      totalFeeCollected: 14200000,
-      totalFeeBalance: 2400000
     }
   },
   {
@@ -329,6 +343,28 @@ export const INITIAL_USERS: AppUser[] = [
     role: 'TENANT_ADMIN',
     isActive: true,
     phone: '+254 722 333 401',
+    photoURL: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80'
+  },
+  {
+    uid: 'user-injiri-dean',
+    email: 'principal@injiricentre.ac.ke',
+    displayName: 'Rev. Dr. Samuel Kariuki, Ph.D (Principal & Dean)',
+    tenantId: 'tenant-injiri-nyeri',
+    tenantName: 'Injiri Centre Nyeri',
+    role: 'TENANT_ADMIN',
+    isActive: true,
+    phone: '+254 712 345 601',
+    photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80'
+  },
+  {
+    uid: 'user-injiri-registrar',
+    email: 'registrar@injiricentre.ac.ke',
+    displayName: 'Dr. Elizabeth Wanjiru (Academic Registrar & OT)',
+    tenantId: 'tenant-injiri-nyeri',
+    tenantName: 'Injiri Centre Nyeri',
+    role: 'MANAGER',
+    isActive: true,
+    phone: '+254 712 345 602',
     photoURL: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80'
   },
   {
@@ -1374,38 +1410,6 @@ export const INITIAL_AUDIT_LOGS: Record<string, AuditLog[]> = {
 // COLLEGE / HIGHER EDUCATION DATA
 // ==========================================
 export const INITIAL_COLLEGE_DEPARTMENTS: Record<string, CollegeDepartment[]> = {
-  'tenant-kca-college': [
-    {
-      id: 'dept-01',
-      tenantId: 'tenant-kca-college',
-      code: 'CS-IT',
-      name: 'Department of Computing & Information Technology',
-      headOfDepartment: 'Dr. Kennedy Kiprop',
-      facultyCount: 14,
-      courseCount: 6,
-      building: 'Technology Block A'
-    },
-    {
-      id: 'dept-02',
-      tenantId: 'tenant-kca-college',
-      code: 'BUS-ACC',
-      name: 'School of Business, Finance & Economics',
-      headOfDepartment: 'Prof. Florence Achieng',
-      facultyCount: 18,
-      courseCount: 8,
-      building: 'Towers Wing B'
-    },
-    {
-      id: 'dept-03',
-      tenantId: 'tenant-kca-college',
-      code: 'ENG-TECH',
-      name: 'School of Electrical & Telecommunications Engineering',
-      headOfDepartment: 'Eng. Samuel Githae',
-      facultyCount: 12,
-      courseCount: 4,
-      building: 'Engineering Complex'
-    }
-  ],
   'tenant-bitc': [
     {
       id: 'dept-bitc-01',
@@ -2407,6 +2411,167 @@ export const INITIAL_THEOLOGY_PROGRAMS: Record<string, TheologyProgram[]> = {
         }
       ]
     }
+  ],
+  'tenant-injiri-nyeri': [
+    {
+      id: 'injiri-prog-01',
+      tenantId: 'tenant-injiri-nyeri',
+      code: 'CERT-MIN-101',
+      title: 'Certificate in Christian Ministry & Discipleship',
+      level: 'CERTIFICATE',
+      departmentId: 'dept-theo-injiri-biblical',
+      departmentName: 'Department of Biblical Studies & Pastoral Foundations',
+      durationSemesters: 2,
+      durationYears: '1 Year (2 Semesters)',
+      tuitionPerSemester: 24000,
+      enrolledStudentsCount: 45,
+      ministryTrack: 'PASTORAL_MINISTRY',
+      totalCreditHours: 30,
+      requiredPracticumHours: 40,
+      description: 'Foundational seminary training covering Old & New Testament surveys, foundational doctrine, pulpit ministry, and rural church leadership.',
+      targetCallings: ['Lay Pastors', 'Church Deacons', 'Youth Leaders', 'Evangelists'],
+      curriculumUnits: [
+        {
+          id: 'inj-u01',
+          unitCode: 'BIB101',
+          unitTitle: 'Old Testament Survey & Covenant History',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 1,
+          category: 'Old Testament',
+          coreRequired: true,
+          description: 'Survey of Genesis to Malachi focusing on covenant theology.'
+        },
+        {
+          id: 'inj-u02',
+          unitCode: 'BIB102',
+          unitTitle: 'New Testament Survey & Gospels',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 1,
+          category: 'New Testament',
+          coreRequired: true,
+          description: 'Study of the four gospels, Acts, epistles, and revelation.'
+        },
+        {
+          id: 'inj-u03',
+          unitCode: 'PAS101',
+          unitTitle: 'Biblical Preaching & Homiletics',
+          creditHours: 3,
+          level: 'CERTIFICATE',
+          semester: 2,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Sermon preparation, delivery, and pastoral care.'
+        }
+      ]
+    },
+    {
+      id: 'injiri-prog-02',
+      tenantId: 'tenant-injiri-nyeri',
+      code: 'DIP-THEO-201',
+      title: 'Diploma in Theology & Pastoral Leadership',
+      level: 'DIPLOMA',
+      departmentId: 'dept-theo-injiri-divinity',
+      departmentName: 'Department of Systematic Theology & Pastoral Studies',
+      durationSemesters: 4,
+      durationYears: '2 Years (4 Semesters)',
+      tuitionPerSemester: 36000,
+      enrolledStudentsCount: 78,
+      ministryTrack: 'PASTORAL_MINISTRY',
+      totalCreditHours: 64,
+      requiredPracticumHours: 80,
+      description: 'Comprehensive theological training for ordained pastors, chaplains, and institutional missionaries in Mount Kenya region.',
+      targetCallings: ['Ordained Pastors', 'Chaplains', 'Church Planters', 'Ministry Coordinators'],
+      curriculumUnits: [
+        {
+          id: 'inj-u10',
+          unitCode: 'TH201',
+          unitTitle: 'Systematic Theology I: God, Creation & Humanity',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 1,
+          category: 'Systematic Theology',
+          coreRequired: true,
+          description: 'Theology Proper, Bibliology, Anthropology, and Hamartiology.'
+        },
+        {
+          id: 'inj-u11',
+          unitCode: 'GRK201',
+          unitTitle: 'Biblical Greek Grammar & Exegesis I',
+          creditHours: 3,
+          level: 'DIPLOMA',
+          semester: 2,
+          category: 'Biblical Languages',
+          coreRequired: true,
+          description: 'Koine Greek grammar, declensions, verb systems, and translation of 1 John.'
+        },
+        {
+          id: 'inj-u12',
+          unitCode: 'PRA202',
+          unitTitle: 'Supervised Parish Practicum & Homiletics Lab',
+          creditHours: 4,
+          level: 'DIPLOMA',
+          semester: 4,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: '80 supervised hours of pulpit ministry, visitation, and parish administration.'
+        }
+      ]
+    },
+    {
+      id: 'injiri-prog-03',
+      tenantId: 'tenant-injiri-nyeri',
+      code: 'BTH-401',
+      title: 'Bachelor of Theology (B.Th) Degree',
+      level: 'BACHELORS',
+      departmentId: 'dept-theo-injiri-divinity',
+      departmentName: 'School of Divinity & Biblical Exegesis',
+      durationSemesters: 8,
+      durationYears: '4 Years (8 Semesters)',
+      tuitionPerSemester: 48000,
+      enrolledStudentsCount: 57,
+      ministryTrack: 'PASTORAL_MINISTRY',
+      totalCreditHours: 128,
+      requiredPracticumHours: 200,
+      description: 'Advanced undergraduate degree preparing candidates for theological research, pastoral ordination, and higher theological education.',
+      targetCallings: ['Senior Pastors', 'Theological Lecturers', 'Seminary Faculty', 'Diocesan Administrators'],
+      curriculumUnits: [
+        {
+          id: 'inj-u20',
+          unitCode: 'HEB301',
+          unitTitle: 'Classical Biblical Hebrew & Exegesis',
+          creditHours: 3,
+          level: 'BACHELORS',
+          semester: 3,
+          category: 'Biblical Languages',
+          coreRequired: true,
+          description: 'Hebrew grammar, morphology, syntax, and exegesis of Genesis narrative.'
+        },
+        {
+          id: 'inj-u21',
+          unitCode: 'TH401',
+          unitTitle: 'African Christian Theology & Hermeneutics',
+          creditHours: 3,
+          level: 'BACHELORS',
+          semester: 6,
+          category: 'Church History',
+          coreRequired: true,
+          description: 'Indigenous theological reflection, cultural dialogue, and church history.'
+        },
+        {
+          id: 'inj-u22',
+          unitCode: 'PRA410',
+          unitTitle: 'Senior Ordination Residency & Practicum (200 Hours)',
+          creditHours: 4,
+          level: 'BACHELORS',
+          semester: 8,
+          category: 'Practical Ministry',
+          coreRequired: true,
+          description: 'Capstone parish residency supervised by the Seminary Dean and Presbytery Moderator.'
+        }
+      ]
+    }
   ]
 };
 
@@ -2538,6 +2703,103 @@ export const INITIAL_THEOLOGY_STUDENTS: Record<string, TheologyStudent[]> = {
       admissionDate: '2022-09-05',
       notes: 'Pioneered 3 church plants along Northern Kenya corridor.'
     }
+  ],
+  'tenant-injiri-nyeri': [
+    {
+      id: 'inj-stud-01',
+      tenantId: 'tenant-injiri-nyeri',
+      regNo: 'INJ/BTH/2023/0012',
+      fullName: 'Pastor Peter Mwangi Wachira',
+      email: 'peter.mwangi@students.injiricentre.ac.ke',
+      phone: '+254 712 998 877',
+      gender: 'Male',
+      programId: 'injiri-prog-03',
+      programCode: 'BTH-401',
+      programTitle: 'Bachelor of Theology (B.Th) Degree',
+      level: 'BACHELORS',
+      ministryTrack: 'PASTORAL_MINISTRY',
+      yearOfStudy: 2,
+      semester: 1,
+      homeChurchDenomination: 'Full Gospel Churches of Kenya (FGCK)',
+      presbyteryOrDiocese: 'FGCK Nyeri Central Sub-District',
+      mentorPastorName: 'Rev. Joseph Karani',
+      mentorPastorPhone: '+254 722 334 455',
+      fieldWorkPlacement: 'FGCK Ruring’u Parish, Nyeri',
+      practicumHoursCompleted: 95,
+      requiredPracticumHours: 200,
+      sermonsEvaluatedCount: 8,
+      status: 'ACTIVE',
+      academicGPA: 3.75,
+      feeBalance: 12000,
+      totalBilled: 96000,
+      totalPaid: 84000,
+      scholarshipOrSponsor: 'FGCK Ministerial Development Fund',
+      admissionDate: '2023-09-04',
+      notes: 'Strong pulpit preaching and systematic theology skills.'
+    },
+    {
+      id: 'inj-stud-02',
+      tenantId: 'tenant-injiri-nyeri',
+      regNo: 'INJ/DIP/2024/0034',
+      fullName: 'Sister Grace Wambui Kariuki',
+      email: 'grace.wambui@students.injiricentre.ac.ke',
+      phone: '+254 721 554 433',
+      gender: 'Female',
+      programId: 'injiri-prog-02',
+      programCode: 'DIP-THEO-201',
+      programTitle: 'Diploma in Theology & Pastoral Leadership',
+      level: 'DIPLOMA',
+      ministryTrack: 'CHRISTIAN_EDUCATION',
+      yearOfStudy: 1,
+      semester: 2,
+      homeChurchDenomination: 'Presbyterian Church of East Africa (PCEA)',
+      presbyteryOrDiocese: 'PCEA Nyeri Presbytery',
+      mentorPastorName: 'Rev. David Maina',
+      mentorPastorPhone: '+254 720 112 233',
+      fieldWorkPlacement: 'PCEA Giakanja Parish, Nyeri',
+      practicumHoursCompleted: 45,
+      requiredPracticumHours: 80,
+      sermonsEvaluatedCount: 5,
+      status: 'ACTIVE',
+      academicGPA: 3.88,
+      feeBalance: 0,
+      totalBilled: 72000,
+      totalPaid: 72000,
+      scholarshipOrSponsor: 'PCEA Presbytery Ministry Bursary',
+      admissionDate: '2024-01-15',
+      notes: 'Excellent Greek grammar translation and Sunday School teacher training.'
+    },
+    {
+      id: 'inj-stud-03',
+      tenantId: 'tenant-injiri-nyeri',
+      regNo: 'INJ/CERT/2024/0051',
+      fullName: 'Evangelist Stephen Nderitu Maina',
+      email: 'stephen.nderitu@students.injiricentre.ac.ke',
+      phone: '+254 733 887 766',
+      gender: 'Male',
+      programId: 'injiri-prog-01',
+      programCode: 'CERT-MIN-101',
+      programTitle: 'Certificate in Christian Ministry & Discipleship',
+      level: 'CERTIFICATE',
+      ministryTrack: 'MISSIOLOGY_EVANGELISM',
+      yearOfStudy: 1,
+      semester: 1,
+      homeChurchDenomination: 'African Independent Pentecostal Church of Africa (AIPCA)',
+      presbyteryOrDiocese: 'AIPCA Nyeri Diocese',
+      mentorPastorName: 'Bishop Isaac Ndung’u',
+      mentorPastorPhone: '+254 722 778 899',
+      fieldWorkPlacement: 'AIPCA Kiganjo Outreach Mission',
+      practicumHoursCompleted: 30,
+      requiredPracticumHours: 40,
+      sermonsEvaluatedCount: 3,
+      status: 'ACTIVE',
+      academicGPA: 3.6,
+      feeBalance: 4000,
+      totalBilled: 48000,
+      totalPaid: 44000,
+      admissionDate: '2024-09-02',
+      notes: 'Active rural evangelism and church planter.'
+    }
   ]
 };
 
@@ -2592,6 +2854,42 @@ export const INITIAL_THEOLOGY_PRACTICUM_LOGS: Record<string, MinistryPracticumLo
       scriptureTextOrTopic: 'Open Air Gospel Rally & Discipleship Class',
       supervisorFeedback: 'Mobilized over 140 community members, 22 made commitments of faith. Follow-up discipleship scheduled.',
       ratingScore: 98,
+      status: 'VERIFIED'
+    }
+  ],
+  'tenant-injiri-nyeri': [
+    {
+      id: 'inj-prac-01',
+      tenantId: 'tenant-injiri-nyeri',
+      studentId: 'inj-stud-01',
+      studentName: 'Pastor Peter Mwangi Wachira',
+      studentRegNo: 'INJ/BTH/2023/0012',
+      programTitle: 'Bachelor of Theology (B.Th) Degree',
+      churchOrInstitution: 'FGCK Ruring’u Parish, Nyeri',
+      supervisorPastor: 'Rev. Joseph Karani',
+      ministryType: 'SUNDAY_SERMON',
+      hoursLogged: 4,
+      date: '2025-02-23',
+      scriptureTextOrTopic: 'The Authority of Scripture in Pastoral Care (2 Timothy 3:16-17)',
+      supervisorFeedback: 'Faithful exegesis, compassionate pastoral tone, and practical application for families.',
+      ratingScore: 95,
+      status: 'VERIFIED'
+    },
+    {
+      id: 'inj-prac-02',
+      tenantId: 'tenant-injiri-nyeri',
+      studentId: 'inj-stud-02',
+      studentName: 'Sister Grace Wambui Kariuki',
+      studentRegNo: 'INJ/DIP/2024/0034',
+      programTitle: 'Diploma in Theology & Pastoral Leadership',
+      churchOrInstitution: 'PCEA Giakanja Parish, Nyeri',
+      supervisorPastor: 'Rev. David Maina',
+      ministryType: 'YOUTH_BIBLE_STUDY',
+      hoursLogged: 5,
+      date: '2025-02-18',
+      scriptureTextOrTopic: 'Spiritual Disciplines and Holy Living (1 Thessalonians 4:1-8)',
+      supervisorFeedback: 'Engaged youth leaders effectively with biblical theology and question-and-answer format.',
+      ratingScore: 92,
       status: 'VERIFIED'
     }
   ]
@@ -2666,6 +2964,50 @@ export const INITIAL_THEOLOGY_LIBRARY: Record<string, TheologyLibraryResource[]>
       totalCopies: 8,
       availableCopies: 3,
       shelfLocation: 'Reference Desk R-04',
+      digitalPdfAvailable: true,
+      status: 'AVAILABLE'
+    }
+  ],
+  'tenant-injiri-nyeri': [
+    {
+      id: 'inj-lib-01',
+      tenantId: 'tenant-injiri-nyeri',
+      isbn: '978-0310286707',
+      title: 'Systematic Theology: An Introduction to Biblical Doctrine',
+      author: 'Wayne Grudem, Ph.D.',
+      category: 'SYSTEMATIC_THEOLOGY',
+      levelFocus: 'ALL_LEVELS',
+      totalCopies: 14,
+      availableCopies: 10,
+      shelfLocation: 'Aisle T-1 (Systematic Theology)',
+      digitalPdfAvailable: true,
+      status: 'AVAILABLE'
+    },
+    {
+      id: 'inj-lib-02',
+      tenantId: 'tenant-injiri-nyeri',
+      isbn: '978-0801021411',
+      title: 'Basics of Biblical Greek Grammar & Syntax',
+      author: 'William D. Mounce',
+      category: 'BIBLICAL_LANGUAGES',
+      levelFocus: 'BACHELORS',
+      totalCopies: 18,
+      availableCopies: 12,
+      shelfLocation: 'Aisle L-1 (Biblical Languages)',
+      digitalPdfAvailable: true,
+      status: 'AVAILABLE'
+    },
+    {
+      id: 'inj-lib-03',
+      tenantId: 'tenant-injiri-nyeri',
+      isbn: '978-9966805128',
+      title: 'African Religions and Philosophy in Christian Ministry',
+      author: 'Prof. John S. Mbiti',
+      category: 'CHURCH_HISTORY',
+      levelFocus: 'BACHELORS',
+      totalCopies: 10,
+      availableCopies: 7,
+      shelfLocation: 'Aisle AF-1 (Africana)',
       digitalPdfAvailable: true,
       status: 'AVAILABLE'
     }
@@ -2884,6 +3226,58 @@ export const INITIAL_THEOLOGY_INVOICES: Record<string, TheologyInvoice[]> = {
       status: 'PAID',
       createdAt: '2025-01-10'
     }
+  ],
+  'tenant-injiri-nyeri': [
+    {
+      id: 'inj-inv-01',
+      tenantId: 'tenant-injiri-nyeri',
+      invoiceNo: 'INJ-INV-2025-001',
+      invoiceNumber: 'INJ-INV-2025-001',
+      studentId: 'inj-stud-01',
+      studentName: 'Pastor Peter Mwangi Wachira',
+      studentRegNo: 'INJ/BTH/2023/0012',
+      programTitle: 'Bachelor of Theology (B.Th) Degree',
+      yearOfStudy: 2,
+      semester: 1,
+      academicYear: '2024/2025',
+      tuitionAmount: 48000,
+      practicumFee: 5000,
+      ordinationLevy: 5000,
+      sponsorDiscountOrBursary: 10000,
+      totalAmount: 48000,
+      paidAmount: 36000,
+      totalBilled: 48000,
+      totalPaid: 36000,
+      balance: 12000,
+      dueDate: '2025-03-25',
+      status: 'PARTIAL',
+      createdAt: '2025-01-10'
+    },
+    {
+      id: 'inj-inv-02',
+      tenantId: 'tenant-injiri-nyeri',
+      invoiceNo: 'INJ-INV-2025-002',
+      invoiceNumber: 'INJ-INV-2025-002',
+      studentId: 'inj-stud-02',
+      studentName: 'Sister Grace Wambui Kariuki',
+      studentRegNo: 'INJ/DIP/2024/0034',
+      programTitle: 'Diploma in Theology & Pastoral Leadership',
+      yearOfStudy: 1,
+      semester: 2,
+      academicYear: '2024/2025',
+      tuitionAmount: 36000,
+      practicumFee: 4000,
+      ordinationLevy: 0,
+      sponsorDiscountOrBursary: 40000,
+      totalAmount: 0,
+      paidAmount: 0,
+      totalBilled: 0,
+      totalPaid: 0,
+      balance: 0,
+      dueDate: '2025-03-25',
+      status: 'PAID',
+      createdAt: '2025-01-10'
+    }
   ]
 };
 
@@ -2922,6 +3316,43 @@ export const INITIAL_THEOLOGY_PAYMENTS: Record<string, TheologyFeePayment[]> = {
       paymentDate: '2025-02-05',
       recordedBy: 'Registrar',
       notes: 'Ordination candidate stole & gown levy',
+      status: 'COMPLETED'
+    }
+  ],
+  'tenant-injiri-nyeri': [
+    {
+      id: 'inj-pay-01',
+      tenantId: 'tenant-injiri-nyeri',
+      receiptNo: 'INJ-REC-101',
+      studentId: 'inj-stud-01',
+      studentName: 'Pastor Peter Mwangi Wachira',
+      studentRegNo: 'INJ/BTH/2023/0012',
+      programTitle: 'Bachelor of Theology (B.Th) Degree',
+      amount: 20000,
+      paymentMethod: 'PARISH_SPONSORSHIP',
+      transactionCode: 'FGCK-NYERI-CHQ442',
+      sponsorOrDiocese: 'FGCK Nyeri Central Sub-District',
+      paymentCategory: 'TUITION',
+      paymentDate: '2025-01-14',
+      recordedBy: 'Seminary Bursar',
+      notes: 'Parish sponsorship grant for semester 1',
+      status: 'COMPLETED'
+    },
+    {
+      id: 'inj-pay-02',
+      tenantId: 'tenant-injiri-nyeri',
+      receiptNo: 'INJ-REC-102',
+      studentId: 'inj-stud-01',
+      studentName: 'Pastor Peter Mwangi Wachira',
+      studentRegNo: 'INJ/BTH/2023/0012',
+      programTitle: 'Bachelor of Theology (B.Th) Degree',
+      amount: 16000,
+      paymentMethod: 'MPESA',
+      transactionCode: 'QKB92817A1',
+      paymentCategory: 'TUITION',
+      paymentDate: '2025-02-04',
+      recordedBy: 'Registrar',
+      notes: 'Direct personal M-Pesa tuition payment',
       status: 'COMPLETED'
     }
   ]

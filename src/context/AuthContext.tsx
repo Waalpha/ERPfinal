@@ -281,27 +281,87 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [allTenants, setAllTenants] = useState<Tenant[]>(INITIAL_TENANTS);
-  const [allUsers, setAllUsers] = useState<AppUser[]>(INITIAL_USERS);
+  const [allTenants, setAllTenants] = useState<Tenant[]>(() => {
+    try {
+      const saved = localStorage.getItem('davetech_all_tenants');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_TENANTS;
+  });
+  const [allUsers, setAllUsers] = useState<AppUser[]>(() => {
+    try {
+      const saved = localStorage.getItem('davetech_all_users');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_USERS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('davetech_all_tenants', JSON.stringify(allTenants));
+    } catch {}
+  }, [allTenants]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('davetech_all_users', JSON.stringify(allUsers));
+    } catch {}
+  }, [allUsers]);
 
   const [tenant, setTenant] = useState<Tenant | null>(() => {
-    const res = resolveTenantFromHost(getEffectiveHostname(), INITIAL_TENANTS);
+    let tenantsList = INITIAL_TENANTS;
+    try {
+      const saved = localStorage.getItem('davetech_all_tenants');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) tenantsList = parsed;
+      }
+    } catch {}
+    const res = resolveTenantFromHost(getEffectiveHostname(), tenantsList);
     if (res.type === 'TENANT') return res.tenant;
-    return INITIAL_TENANTS[0];
+    return tenantsList[0];
   });
 
   const [isPlatformMode, setIsPlatformMode] = useState<boolean>(() => {
-    const res = resolveTenantFromHost(getEffectiveHostname(), INITIAL_TENANTS);
+    let tenantsList = INITIAL_TENANTS;
+    try {
+      const saved = localStorage.getItem('davetech_all_tenants');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) tenantsList = parsed;
+      }
+    } catch {}
+    const res = resolveTenantFromHost(getEffectiveHostname(), tenantsList);
     return res.type === 'PLATFORM';
   });
 
   const [user, setUser] = useState<AppUser | null>(() => {
-    const res = resolveTenantFromHost(getEffectiveHostname(), INITIAL_TENANTS);
+    let tenantsList = INITIAL_TENANTS;
+    let usersList = INITIAL_USERS;
+    try {
+      const savedT = localStorage.getItem('davetech_all_tenants');
+      if (savedT) {
+        const parsed = JSON.parse(savedT);
+        if (Array.isArray(parsed) && parsed.length > 0) tenantsList = parsed;
+      }
+      const savedU = localStorage.getItem('davetech_all_users');
+      if (savedU) {
+        const parsedU = JSON.parse(savedU);
+        if (Array.isArray(parsedU) && parsedU.length > 0) usersList = parsedU;
+      }
+    } catch {}
+    const res = resolveTenantFromHost(getEffectiveHostname(), tenantsList);
     if (res.type === 'TENANT') {
-      const matchedUser = INITIAL_USERS.find(u => u.tenantId === res.tenant.id);
-      return matchedUser || INITIAL_USERS[0];
+      const matchedUser = usersList.find(u => u.tenantId === res.tenant.id);
+      return matchedUser || usersList[0];
     }
-    return INITIAL_USERS[0]; // Default to Super Admin for Platform Master
+    return usersList[0]; // Default to Super Admin for Platform Master
   });
 
   const [loading, setLoading] = useState<boolean>(false);

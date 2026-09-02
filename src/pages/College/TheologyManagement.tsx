@@ -32,7 +32,9 @@ import {
   CreditCard,
   Banknote,
   Smartphone,
-  AlertCircle
+  AlertCircle,
+  Bell,
+  Settings
 } from 'lucide-react';
 import {
   TheologyProgram,
@@ -67,18 +69,87 @@ export const TheologyManagement: React.FC<TheologyManagementProps> = ({ currentT
     addTheologyLibraryResource,
     generateTheologyInvoice,
     recordTheologyPayment,
-    recordTheologyBursary
+    recordTheologyBursary,
+    updateTenant
   } = useAuth();
 
   // Internal Tab Switcher if embedded or controlled
-  const [activeSubTab, setActiveSubTab] = useState<'programs' | 'students' | 'practicum' | 'library' | 'curriculum' | 'fees'>(() => {
+  const [activeSubTab, setActiveSubTab] = useState<'programs' | 'students' | 'practicum' | 'library' | 'curriculum' | 'fees' | 'staff' | 'reports' | 'sms' | 'settings'>(() => {
     if (currentTab === 'theology-students') return 'students';
     if (currentTab === 'theology-fees') return 'fees';
     if (currentTab === 'theology-practicum') return 'practicum';
     if (currentTab === 'theology-library') return 'library';
     if (currentTab === 'theology-curriculum') return 'curriculum';
+    if (currentTab === 'theology-staff') return 'staff';
+    if (currentTab === 'theology-reports') return 'reports';
+    if (currentTab === 'theology-sms') return 'sms';
+    if (currentTab === 'theology-settings') return 'settings';
     return 'programs';
   });
+
+  React.useEffect(() => {
+    if (currentTab === 'theology-students') setActiveSubTab('students');
+    else if (currentTab === 'theology-fees') setActiveSubTab('fees');
+    else if (currentTab === 'theology-practicum') setActiveSubTab('practicum');
+    else if (currentTab === 'theology-library') setActiveSubTab('library');
+    else if (currentTab === 'theology-staff') setActiveSubTab('staff');
+    else if (currentTab === 'theology-reports') setActiveSubTab('reports');
+    else if (currentTab === 'theology-sms') setActiveSubTab('sms');
+    else if (currentTab === 'theology-settings') setActiveSubTab('settings');
+    else if (currentTab === 'theology-curriculum') setActiveSubTab('curriculum');
+    else setActiveSubTab('programs');
+  }, [currentTab]);
+
+  // Seminary Settings / Institution Profile Form State
+  const [settingsName, setSettingsName] = useState(tenant?.name || '');
+  const [settingsMotto, setSettingsMotto] = useState(tenant?.motto || '');
+  const [settingsLogo, setSettingsLogo] = useState(tenant?.logoUrl || '');
+  const [settingsPhone, setSettingsPhone] = useState(tenant?.phone || '+254 7');
+  const [settingsEmail, setSettingsEmail] = useState(tenant?.contactEmail || 'seminary@divinity.ac.ke');
+  const [settingsAddress, setSettingsAddress] = useState(tenant?.address || 'P.O. Box 1234, Nyeri, Kenya');
+  const [settingsWebsite, setSettingsWebsite] = useState(tenant?.publicWebsite || '');
+  const [settingsPrimaryColor, setSettingsPrimaryColor] = useState(tenant?.primaryColor || '#d97706');
+  const [settingsSecondaryColor, setSettingsSecondaryColor] = useState(tenant?.secondaryColor || '#4f46e5');
+  const [settingsAcademicYear, setSettingsAcademicYear] = useState(tenant?.currentAcademicYear || '2025/2026');
+  const [settingsSemester, setSettingsSemester] = useState(tenant?.currentTerm || 'SEMESTER_1');
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
+
+  React.useEffect(() => {
+    if (tenant) {
+      setSettingsName(tenant.name || '');
+      setSettingsMotto(tenant.motto || '');
+      setSettingsLogo(tenant.logoUrl || '');
+      setSettingsPhone(tenant.phone || '+254 7');
+      setSettingsEmail(tenant.contactEmail || '');
+      setSettingsAddress(tenant.address || '');
+      setSettingsWebsite(tenant.publicWebsite || '');
+      setSettingsPrimaryColor(tenant.primaryColor || '#d97706');
+      setSettingsSecondaryColor(tenant.secondaryColor || '#4f46e5');
+      setSettingsAcademicYear(tenant.currentAcademicYear || '2025/2026');
+      setSettingsSemester(tenant.currentTerm || 'SEMESTER_1');
+    }
+  }, [tenant]);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tenant) return;
+    await updateTenant(tenant.id, {
+      name: settingsName,
+      motto: settingsMotto,
+      logoUrl: settingsLogo,
+      phone: settingsPhone,
+      contactEmail: settingsEmail,
+      address: settingsAddress,
+      publicWebsite: settingsWebsite,
+      primaryColor: settingsPrimaryColor,
+      secondaryColor: settingsSecondaryColor,
+      currentAcademicYear: settingsAcademicYear,
+      currentTerm: settingsSemester as any,
+      type: 'THEOLOGICAL'
+    });
+    setSettingsSuccess(true);
+    setTimeout(() => setSettingsSuccess(false), 3000);
+  };
 
   // Filters & Searches
   const [searchQuery, setSearchQuery] = useState('');
@@ -626,6 +697,54 @@ export const TheologyManagement: React.FC<TheologyManagementProps> = ({ currentT
           >
             <Scroll className="h-4 w-4" />
             <span>Greek & Hebrew Exegesis</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('staff')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              activeSubTab === 'staff'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <UserCheck className="h-4 w-4" />
+            <span>Faculty & Staff</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('reports')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              activeSubTab === 'reports'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            <span>Seminary Reports</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('sms')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              activeSubTab === 'sms'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Bell className="h-4 w-4" />
+            <span>Communication / SMS</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('settings')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              activeSubTab === 'settings'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Seminary Settings</span>
           </button>
         </div>
       </div>
@@ -1193,6 +1312,285 @@ export const TheologyManagement: React.FC<TheologyManagementProps> = ({ currentT
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* SUBTAB: FACULTY & STAFF */}
+      {activeSubTab === 'staff' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex justify-between items-center">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Seminary Faculty & Lecturers</h2>
+              <p className="text-xs text-slate-500">Theological professors, Greek/Hebrew exegesis instructors, and pastoral mentors</p>
+            </div>
+            <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-xl text-xs font-bold">
+              3 Active Faculty Members
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-base">
+                  Dr
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Rev. Dr. Samuel Kariuki</h3>
+                  <p className="text-xs text-amber-700 font-medium">Principal & Systematic Theology</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">Ph.D. in Dogmatic Theology, Ridley Hall Cambridge. Ordained Priest with 22 years in seminary formation.</p>
+              <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+                Email: s.kariuki@divinity.ac.ke • Ext: 101
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-800 font-bold flex items-center justify-center text-base">
+                  Pr
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Dr. Elizabeth Wanjiru</h3>
+                  <p className="text-xs text-indigo-700 font-medium">Old Testament & Hebrew Exegesis</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">Ph.D. in Near Eastern Languages & Biblical Hebrew. Specialist in Masoretic text and Isaiah manuscripts.</p>
+              <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+                Email: e.wanjiru@divinity.ac.ke • Ext: 104
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-base">
+                  Rt
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Ven. James Omondi</h3>
+                  <p className="text-xs text-emerald-700 font-medium">Director of Pastoral Fieldwork</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">M.Div., St. Paul's University Limuru. Supervises ministry practicum and parish placements.</p>
+              <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+                Email: j.omondi@divinity.ac.ke • Ext: 109
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB: SEMINARY REPORTS */}
+      {activeSubTab === 'reports' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+            <h2 className="text-base font-bold text-slate-900 mb-1">Seminary Academic & Financial Reports</h2>
+            <p className="text-xs text-slate-500 mb-4">Generate certified transcripts, ordination clearance letters, and diocesan financial summaries.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <button onClick={() => window.print()} className="p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-left transition group">
+                <FileText className="h-6 w-6 text-amber-600 mb-2 group-hover:scale-110 transition" />
+                <h3 className="font-bold text-slate-900 text-xs">Seminarian Transcripts (B.Th.)</h3>
+                <p className="text-[11px] text-slate-500 mt-1">Export official semester grade sheets and credit hours.</p>
+              </button>
+              <button onClick={() => window.print()} className="p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-left transition group">
+                <Award className="h-6 w-6 text-indigo-600 mb-2 group-hover:scale-110 transition" />
+                <h3 className="font-bold text-slate-900 text-xs">Ordination Candidate Clearance</h3>
+                <p className="text-[11px] text-slate-500 mt-1">Verify practicum hours, dogmatic exams, and bishop approval.</p>
+              </button>
+              <button onClick={() => window.print()} className="p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-left transition group">
+                <Receipt className="h-6 w-6 text-emerald-600 mb-2 group-hover:scale-110 transition" />
+                <h3 className="font-bold text-slate-900 text-xs">Diocesan Bursary & Tithing Ledger</h3>
+                <p className="text-[11px] text-slate-500 mt-1">Consolidated financial audit for synod sponsors.</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB: COMMUNICATION / SMS */}
+      {activeSubTab === 'sms' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs max-w-2xl space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Broadcast SMS to Seminarians & Diocesan Sponsors</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Send urgent chapel announcements, practicum deadlines, or exam timetables.</p>
+            </div>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Target Recipient Group</label>
+                <select className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-medium">
+                  <option>All Active Seminarians ({theologyStudents.length})</option>
+                  <option>Ordination Candidates Only</option>
+                  <option>Diocesan Sponsors & Bishop Representatives</option>
+                  <option>Faculty & Department Staff</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Message Content</label>
+                <textarea rows={4} placeholder="Type announcement or reminder message here..." className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium" defaultValue="Greetings in Christ. This is a reminder for the upcoming Patristics Exegesis Seminar and Morning Prayer Chapel at 7:00 AM sharp." />
+              </div>
+              <button onClick={() => alert('SMS broadcast successfully dispatched to all recipients!')} className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-xs transition">
+                Send SMS Broadcast
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB: SEMINARY SETTINGS */}
+      {activeSubTab === 'settings' && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs max-w-3xl space-y-6">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Seminary Settings & Institution Profile</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Configure official seminary branding, crest logo, academic term parameters, and institutional contact details.
+            </p>
+          </div>
+
+          {settingsSuccess && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-semibold flex items-center space-x-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <span>Seminary profile and settings successfully updated!</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveSettings} className="space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Seminary / Institution Legal Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={settingsName}
+                  onChange={(e) => setSettingsName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium text-slate-900"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Institutional Motto</label>
+                <input
+                  type="text"
+                  value={settingsMotto}
+                  onChange={(e) => setSettingsMotto(e.target.value)}
+                  placeholder="e.g. Equipping Leaders for Word and Ministry"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Official Crest / Logo Image URL</label>
+                <input
+                  type="url"
+                  value={settingsLogo}
+                  onChange={(e) => setSettingsLogo(e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-mono text-slate-600"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Public Website</label>
+                <input
+                  type="text"
+                  value={settingsWebsite}
+                  onChange={(e) => setSettingsWebsite(e.target.value)}
+                  placeholder="https://divinity.ac.ke"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-mono text-slate-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                <input
+                  type="text"
+                  value={settingsPhone}
+                  onChange={(e) => setSettingsPhone(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Contact Email</label>
+                <input
+                  type="email"
+                  value={settingsEmail}
+                  onChange={(e) => setSettingsEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Academic Year</label>
+                <input
+                  type="text"
+                  value={settingsAcademicYear}
+                  onChange={(e) => setSettingsAcademicYear(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Physical Address / Diocese Location</label>
+              <input
+                type="text"
+                value={settingsAddress}
+                onChange={(e) => setSettingsAddress(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Academic Semester / Term</label>
+                <select
+                  value={settingsSemester}
+                  onChange={(e) => setSettingsSemester(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-medium text-slate-800 focus:outline-none"
+                >
+                  <option value="SEMESTER_1">Semester 1 (Epiphany / Lent Term)</option>
+                  <option value="SEMESTER_2">Semester 2 (Trinity Term)</option>
+                  <option value="SEMESTER_3">Semester 3 (Advent Term / In-Service)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Primary Brand Accent Color</label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="color"
+                    value={settingsPrimaryColor}
+                    onChange={(e) => setSettingsPrimaryColor(e.target.value)}
+                    className="w-10 h-9 rounded-xl border border-slate-200 cursor-pointer p-0.5"
+                  />
+                  <input
+                    type="text"
+                    value={settingsPrimaryColor}
+                    onChange={(e) => setSettingsPrimaryColor(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-slate-200 rounded-xl font-mono text-xs uppercase"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Institution Type (Fixed)</label>
+                <input
+                  type="text"
+                  disabled
+                  value="THEOLOGICAL SEMINARY / COLLEGE"
+                  className="w-full px-3 py-2 border border-slate-200 bg-slate-100 rounded-xl font-semibold text-slate-600 cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex justify-end">
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md transition-all transform active:scale-95 flex items-center space-x-2"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Save Seminary Profile & Settings</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

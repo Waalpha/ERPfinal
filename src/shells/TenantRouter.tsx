@@ -16,6 +16,7 @@ import { CollegeManagement } from '../pages/College/CollegeManagement';
 import { TheologyManagement } from '../pages/College/TheologyManagement';
 import { RetailPOSInventory } from '../pages/Retail/RetailPOSInventory';
 import { HospitalManagement } from '../pages/Hospital/HospitalManagement';
+import { normalizeTenantType } from '../services/ModuleRegistry';
 import { Student, Tenant } from '../types';
 
 interface TenantRouterProps {
@@ -29,7 +30,6 @@ export const TenantRouter: React.FC<TenantRouterProps> = ({
   onNavigateTab,
   tenant
 }) => {
-  // Cross-page parameters
   const [selectedStudentForPayment, setSelectedStudentForPayment] = useState<Student | null>(null);
   const [selectedStudentForReport, setSelectedStudentForReport] = useState<Student | null>(null);
   const [selectedStudentForSMS, setSelectedStudentForSMS] = useState<Student | null>(null);
@@ -49,27 +49,26 @@ export const TenantRouter: React.FC<TenantRouterProps> = ({
     onNavigateTab('school-sms');
   };
 
-  // College / Higher Ed
-  if (currentTab.startsWith('college-') || (tenant.type === 'COLLEGE' && !currentTab.startsWith('school-'))) {
-    return <CollegeManagement currentTab={currentTab} />;
-  }
+  const tType = normalizeTenantType(tenant.type);
 
-  // Theology / Seminary
-  if (currentTab.startsWith('theology-')) {
+  // Strict Tenant Type Isolation
+  if (tType === 'THEOLOGICAL') {
     return <TheologyManagement currentTab={currentTab} />;
   }
 
-  // Retail / Wholesale
-  if (currentTab.startsWith('retail-') || (tenant.type === 'RETAIL' && !currentTab.startsWith('school-'))) {
+  if (tType === 'COLLEGE') {
+    return <CollegeManagement currentTab={currentTab} />;
+  }
+
+  if (tType === 'BUSINESS') {
     return <RetailPOSInventory currentTab={currentTab} />;
   }
 
-  // Hospital / Clinic
-  if (currentTab.startsWith('hospital-') || (tenant.type === 'HOSPITAL' && !currentTab.startsWith('school-'))) {
+  if (tType === 'HOSPITAL') {
     return <HospitalManagement currentTab={currentTab} />;
   }
 
-  // Primary / Secondary School views
+  // School views
   switch (currentTab) {
     case 'school-overview':
       return (
