@@ -485,11 +485,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const tenantsSnap = await getDocs(collection(db, 'tenants'));
         if (!tenantsSnap.empty) {
           const loadedTenants: Tenant[] = [];
-          tenantsSnap.forEach(docSnap => {
-            loadedTenants.push(docSnap.data() as Tenant);
-          });
+          const loadedFeeStructures: Record<string, FeeStructureItem[]> = {};
+          for (const docSnap of tenantsSnap.docs) {
+            const tData = docSnap.data() as Tenant;
+            loadedTenants.push(tData);
+
+            try {
+              const feesSnap = await getDocs(collection(db, 'tenants', tData.id, 'fee_structures'));
+              const tenantFees: FeeStructureItem[] = [];
+              feesSnap.forEach(fSnap => {
+                tenantFees.push(fSnap.data() as FeeStructureItem);
+              });
+              if (tenantFees.length > 0) {
+                loadedFeeStructures[tData.id] = tenantFees;
+              }
+            } catch (e) {}
+          }
           if (loadedTenants.length > 0) {
             setAllTenants(loadedTenants);
+          }
+          if (Object.keys(loadedFeeStructures).length > 0) {
+            setFeeStructureMap(prev => ({ ...prev, ...loadedFeeStructures }));
           }
         }
 
@@ -1276,10 +1292,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `fee-item-${Date.now()}`,
       tenantId: tenant.id
     };
-    setFeeStructureMap(prev => ({
-      ...prev,
-      [tenant.id]: [...(prev[tenant.id] || []), newItem]
-    }));
+    setFeeStructureMap(prev => {
+      const updated = {
+        ...prev,
+        [tenant.id]: [...(prev[tenant.id] || []), newItem]
+      };
+      try {
+        localStorage.setItem('davetech_fee_structure_map', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'fee_structures', newItem.id), cleanFirestoreData(newItem), { merge: true });
+    } catch (err) {
+      console.error("Error saving fee structure item to Firestore:", err);
+    }
+
     logAuditEvent('FEE_STRUCTURE_UPDATED', `Added fee item ${newItem.category} (KES ${newItem.amount}) for ${newItem.grade}`, 'FINANCE');
     return newItem;
   };
