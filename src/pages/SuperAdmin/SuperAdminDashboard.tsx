@@ -577,8 +577,8 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="space-y-1">
-                          <div className="flex items-center space-x-1.5">
-                            <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                          <div className="flex items-center space-x-1.5 whitespace-nowrap">
+                            <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50/80 px-2.5 py-1 rounded-md border border-indigo-100/80 truncate max-w-[220px]" title={`${slug}.${MAIN_DOMAIN.toLowerCase()}`}>
                               {slug}.{MAIN_DOMAIN.toLowerCase()}
                             </span>
                             <button
@@ -1674,7 +1674,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     value={tierName}
                     onChange={(e) => setTierName(e.target.value)}
                     placeholder="e.g. Basic Starter Tier"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
@@ -1703,7 +1703,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   value={tierTagline}
                   onChange={(e) => setTierTagline(e.target.value)}
                   placeholder="e.g. Essential school, retail & single-branch starter package"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
@@ -1721,7 +1721,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       value={tierCurrency}
                       onChange={(e) => setTierCurrency(e.target.value.toUpperCase())}
                       placeholder="KES"
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold uppercase focus:outline-none"
+                      className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold uppercase focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1733,7 +1733,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       step="500"
                       value={tierMonthlyPrice}
                       onChange={(e) => setTierMonthlyPrice(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none"
+                      className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1745,7 +1745,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       step="1000"
                       value={tierAnnualPrice}
                       onChange={(e) => setTierAnnualPrice(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none"
+                      className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1765,7 +1765,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       value={tierMaxLearners}
                       onChange={(e) => setTierMaxLearners(e.target.value)}
                       placeholder="e.g. Up to 300 Learners / Records"
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:outline-none"
+                      className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-semibold focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1776,7 +1776,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       value={tierMaxStaff}
                       onChange={(e) => setTierMaxStaff(e.target.value)}
                       placeholder="e.g. 5 Staff / Teacher Accounts"
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:outline-none"
+                      className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-semibold focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1787,7 +1787,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       min="1"
                       value={tierStorageGB}
                       onChange={(e) => setTierStorageGB(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none"
+                      className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1800,7 +1800,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     value={tierSupportSLA}
                     onChange={(e) => setTierSupportSLA(e.target.value)}
                     placeholder="e.g. Priority WhatsApp & Dedicated Phone Support (2h SLA)"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:outline-none"
+                    className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-semibold focus:outline-none"
                   />
                 </div>
               </div>
@@ -1844,7 +1844,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       }
                     }}
                     placeholder="Type new capability (e.g. Real-Time M-Pesa Webhook Gateway)..."
-                    className="flex-1 px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-xs"
+                    className="flex-1 px-3 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none text-xs"
                   />
                   <button
                     type="button"

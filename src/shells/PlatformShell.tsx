@@ -241,7 +241,7 @@ export const PlatformShell: React.FC = () => {
       </header>
 
       {/* Main Container: Sidebar + Content */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto overflow-hidden">
+      <div className="flex-1 flex w-full overflow-y-auto">
         {/* Master Platform Sidebar (Desktop) */}
         <aside className="w-64 border-r border-slate-800 bg-slate-900/50 p-4 space-y-6 hidden lg:flex flex-col flex-shrink-0">
           <div>
@@ -337,7 +337,7 @@ export const PlatformShell: React.FC = () => {
         )}
 
         {/* Platform Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <SuperAdminDashboard
             currentTab={currentTab}
             onOpenCreateTenant={() => setShowCreateTenantModal(true)}

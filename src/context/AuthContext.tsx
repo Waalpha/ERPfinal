@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { auth, db, googleProvider, firebaseProjectId, firestoreDatabaseName, isFirebaseConfigured, cleanFirestoreData } from '../firebase/config';
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, collection } from 'firebase/firestore';
 import {
   Tenant,
   AppUser,
@@ -478,6 +478,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Fetch tenants, platform settings, and subscription tiers from Firestore on mount
+  useEffect(() => {
+    const fetchFirestoreData = async () => {
+      try {
+        const tenantsSnap = await getDocs(collection(db, 'tenants'));
+        if (!tenantsSnap.empty) {
+          const loadedTenants: Tenant[] = [];
+          tenantsSnap.forEach(docSnap => {
+            loadedTenants.push(docSnap.data() as Tenant);
+          });
+          if (loadedTenants.length > 0) {
+            setAllTenants(loadedTenants);
+          }
+        }
+
+        const brandingDoc = await getDoc(doc(db, 'platform_settings', 'global_branding'));
+        if (brandingDoc.exists()) {
+          setPlatformSettings(prev => ({ ...prev, ...brandingDoc.data() }));
+        }
+
+        const tiersSnap = await getDocs(collection(db, 'platform_settings'));
+        const loadedTiers: SubscriptionTierConfig[] = [];
+        tiersSnap.forEach(docSnap => {
+          if (docSnap.id.startsWith('tier_')) {
+            loadedTiers.push(docSnap.data() as SubscriptionTierConfig);
+          }
+        });
+        if (loadedTiers.length > 0) {
+          setSubscriptionTiers(prev => {
+            const map = new Map(prev.map(t => [t.id, t]));
+            loadedTiers.forEach(t => map.set(t.id, t));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching data from Firestore on mount:', err);
+      }
+    };
+    fetchFirestoreData();
+  }, []);
+
   const logAuditEvent = useCallback((action: string, details: string, category: AuditLog['category'] = 'SETTINGS') => {
     if (!tenant || !user) return;
     const newLog: AuditLog = {
@@ -624,9 +665,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
 
     try {
-      await setDoc(doc(db, 'tenants', newTenantId), newTenant);
-    } catch {
-      // Local state active
+      await setDoc(doc(db, 'tenants', newTenantId), cleanFirestoreData(newTenant));
+    } catch (err) {
+      console.error('Failed to save new tenant to Firestore:', err);
     }
 
     return newTenant;
@@ -639,19 +680,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     logAuditEvent('TENANT_UPDATED', `Updated organization profile parameters: ${Object.keys(updates).join(', ')}`);
     try {
-      await updateDoc(doc(db, 'tenants', tenantId), updates);
-    } catch {
-      // Fallback
+      await updateDoc(doc(db, 'tenants', tenantId), cleanFirestoreData(updates));
+    } catch (err) {
+      console.error('Failed to update tenant in Firestore:', err);
     }
   };
 
   const deleteTenant = async (tenantId: string) => {
-    setAllTenants(prev => prev.filter(t => t.id !== tenantId));
+    let remainingTenants: Tenant[] = [];
+    setAllTenants(prev => {
+      remainingTenants = prev.filter(t => t.id !== tenantId);
+      try {
+        localStorage.setItem('davetech_all_tenants', JSON.stringify(remainingTenants));
+      } catch {}
+      return remainingTenants;
+    });
     if (tenant?.id === tenantId) {
-      const remaining = allTenants.filter(t => t.id !== tenantId);
-      setTenant(remaining[0] || null);
+      setTenant(remainingTenants[0] || null);
     }
     logAuditEvent('TENANT_DELETED', `Deleted tenant workspace ${tenantId}`);
+    try {
+      await deleteDoc(doc(db, 'tenants', tenantId));
+    } catch (err) {
+      console.error('Failed to delete tenant from Firestore:', err);
+    }
   };
 
   const updateTenantStatus = async (tenantId: string, status: TenantStatus) => {
@@ -661,9 +713,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     logAuditEvent('TENANT_STATUS_CHANGED', `Changed tenant status to ${status}`);
     try {
-      await updateDoc(doc(db, 'tenants', tenantId), { status });
-    } catch {
-      // Fallback
+      await updateDoc(doc(db, 'tenants', tenantId), cleanFirestoreData({ status }));
+    } catch (err) {
+      console.error('Failed to update tenant status in Firestore:', err);
     }
   };
 
@@ -674,9 +726,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     logAuditEvent('PLAN_UPGRADED', `Updated organization subscription plan to ${plan}`);
     try {
-      await updateDoc(doc(db, 'tenants', tenantId), { plan });
-    } catch {
-      // Local fallback
+      await updateDoc(doc(db, 'tenants', tenantId), cleanFirestoreData({ plan }));
+    } catch (err) {
+      console.error('Failed to update tenant plan in Firestore:', err);
     }
   };
 
@@ -692,9 +744,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     logAuditEvent('SUBSCRIPTION_TIER_EDITED', `Super Admin updated subscription tier configuration for ${tierId}: ${Object.keys(updates).join(', ')}`, 'SETTINGS');
     try {
-      await setDoc(doc(db, 'platform_settings', `tier_${tierId.toLowerCase()}`), updates, { merge: true });
-    } catch {
-      // Local state fallback
+      await setDoc(doc(db, 'platform_settings', `tier_${tierId.toLowerCase()}`), cleanFirestoreData(updates), { merge: true });
+    } catch (err) {
+      console.error('Failed to save subscription tier to Firestore:', err);
     }
   };
 
@@ -720,9 +772,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     logAuditEvent('PLATFORM_SETTINGS_UPDATED', `Super Admin updated platform settings & branding: ${Object.keys(updates).join(', ')}`, 'SETTINGS');
     try {
-      await setDoc(doc(db, 'platform_settings', 'global_branding'), updates, { merge: true });
-    } catch {
-      // Local state fallback
+      await setDoc(doc(db, 'platform_settings', 'global_branding'), cleanFirestoreData(updates), { merge: true });
+    } catch (err) {
+      console.error('Failed to save platform settings to Firestore:', err);
     }
   };
 

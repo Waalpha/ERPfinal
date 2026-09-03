@@ -64,70 +64,48 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
   ];
 
   return (
-    <div className="space-y-6">
-      {/* School Executive Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-start space-x-4">
-            <div className="h-16 w-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-inner flex-shrink-0">
-              🏫
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  {tenant?.status || 'ACTIVE'} WORKSPACE
-                </span>
-                <span className="text-xs text-slate-400 font-mono">Code: {tenant?.code}</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">
-                {tenant?.name}
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-300 italic mt-0.5">
-                "{tenant?.motto || 'Excellence in Competence & Character'}"
-              </p>
-            </div>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Enterprise ERP Header Card */}
+      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-start space-x-4">
+          <div className="h-14 w-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl shadow-xs flex-shrink-0 text-indigo-600 font-bold">
+            {tenant?.logoUrl ? (
+              <img src={tenant.logoUrl} alt={tenant.name} className="h-10 w-10 object-contain rounded-xl" />
+            ) : (
+              tenant?.name?.charAt(0) || '🏫'
+            )}
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={onOpenAdmission}
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-lg shadow-indigo-600/30 flex items-center space-x-2"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Admit Learner</span>
-            </button>
-            <button
-              onClick={onOpenRecordPayment}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-lg shadow-emerald-600/30 flex items-center space-x-2"
-            >
-              <Receipt className="h-4 w-4" />
-              <span>Receive Payment</span>
-            </button>
+          <div>
+            <div className="flex items-center space-x-2.5">
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {tenant?.status || 'ACTIVE'} ENTERPRISE ERP
+              </span>
+              <span className="text-xs text-slate-400 font-mono">ID: {tenant?.code}</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 mt-1">
+              {tenant?.name}
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              {tenant?.motto || 'Institutional Operations & Academic Ledger'} • {tenant?.currentAcademicYear || '2025'} / {(tenant?.currentTerm || 'TERM_1').replace('_', ' ')}
+            </p>
           </div>
         </div>
 
-        {/* Quick Ribbon */}
-        <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-          <div>
-            <span className="text-slate-400">Academic Year:</span>
-            <div className="font-bold text-white text-sm">{tenant?.currentAcademicYear || '2025'}</div>
-          </div>
-          <div>
-            <span className="text-slate-400">Current Term:</span>
-            <div className="font-bold text-indigo-300 text-sm">
-              {(tenant?.currentTerm || 'TERM_1').replace('_', ' ')}
-            </div>
-          </div>
-          <div>
-            <span className="text-slate-400">Curriculum Framework:</span>
-            <div className="font-bold text-emerald-300 text-sm">CBC (Competency Based)</div>
-          </div>
-          <div>
-            <span className="text-slate-400">Base Currency:</span>
-            <div className="font-bold text-cyan-300 text-sm">{tenant?.currency || 'KES'}</div>
-          </div>
+        <div className="flex items-center space-x-3 flex-shrink-0">
+          <button
+            onClick={onOpenAdmission}
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-xs flex items-center space-x-1.5"
+          >
+            <PlusCircle className="h-3.5 w-3.5" />
+            <span>Admit Learner</span>
+          </button>
+          <button
+            onClick={onOpenRecordPayment}
+            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow-xs flex items-center space-x-1.5"
+          >
+            <Receipt className="h-3.5 w-3.5" />
+            <span>Receive Payment</span>
+          </button>
         </div>
       </div>
 
@@ -136,15 +114,15 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
         {/* Total Students */}
         <div
           onClick={() => onNavigate('school-students')}
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-sm transition cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Enrolled Learners</span>
-            <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <GraduationCap className="h-5 w-5" />
+            <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <GraduationCap className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">{totalStudents}</div>
+          <div className="text-2xl font-black text-slate-900 mt-2 tracking-tight">{totalStudents}</div>
           <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
             <span>{maleCount} Boys • {femaleCount} Girls</span>
             <span className="text-indigo-600 font-semibold flex items-center">
@@ -156,17 +134,17 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
         {/* Total Staff */}
         <div
           onClick={() => onNavigate('school-staff')}
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-sm transition cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Faculty & Staff</span>
-            <div className="h-10 w-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Users className="h-5 w-5" />
+            <div className="h-9 w-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
+              <Users className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">{staff.length}</div>
+          <div className="text-2xl font-black text-slate-900 mt-2 tracking-tight">{staff.length}</div>
           <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
-            <span>{staff.filter(s => s.role === 'TEACHER').length} CBC Teachers</span>
+            <span>{staff.filter(s => s.role === 'TEACHER').length} Teachers</span>
             <span className="text-cyan-600 font-semibold flex items-center">
               Directory <ArrowUpRight className="h-3 w-3 ml-0.5" />
             </span>
@@ -176,15 +154,15 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
         {/* Fees Collected */}
         <div
           onClick={() => onNavigate('school-fees')}
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-emerald-300 hover:shadow-sm transition cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Fees Collected (Term 1)</span>
-            <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Receipt className="h-5 w-5" />
+            <span className="text-xs font-semibold text-slate-500">Fees Collected (Term)</span>
+            <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Receipt className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-emerald-600 mt-2">
+          <div className="text-2xl font-black text-emerald-600 mt-2 tracking-tight">
             KES {totalPaid.toLocaleString()}
           </div>
           <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
@@ -198,19 +176,19 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
         {/* Fee Balances */}
         <div
           onClick={() => onNavigate('school-fees')}
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-rose-300 hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-rose-300 hover:shadow-sm transition cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Total Outstanding</span>
-            <div className="h-10 w-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <AlertCircle className="h-5 w-5" />
+            <div className="h-9 w-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <AlertCircle className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-rose-600 mt-2">
+          <div className="text-2xl font-black text-rose-600 mt-2 tracking-tight">
             KES {totalBalance.toLocaleString()}
           </div>
           <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
-            <span>{students.filter(s => s.feeBalance > 0).length} Learners with balances</span>
+            <span>{students.filter(s => s.feeBalance > 0).length} Balances</span>
             <span className="text-rose-600 font-semibold flex items-center">
               Clearance <ArrowUpRight className="h-3 w-3 ml-0.5" />
             </span>
@@ -223,81 +201,83 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
         {/* Left 2 Cols: Grade Enrollment & Quick Actions */}
         <div className="lg:col-span-2 space-y-6">
           {/* Quick Action Matrix */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-              Daily Administrative Workflows
-            </h2>
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+                Administrative Workflows & Modules
+              </h2>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <button
                 onClick={() => onNavigate('school-attendance')}
-                className="p-3.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-left transition-all group"
+                className="p-3.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 text-left transition group"
               >
-                <div className="h-8 w-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 rounded-lg bg-indigo-100/80 text-indigo-600 flex items-center justify-center mb-2">
                   <CalendarCheck className="h-4 w-4" />
                 </div>
-                <div className="text-xs font-bold text-slate-800">Roll Call</div>
+                <div className="text-xs font-bold text-slate-900">Roll Call</div>
                 <div className="text-[11px] text-slate-500">Mark daily attendance</div>
               </button>
 
               <button
                 onClick={() => onNavigate('school-assessments')}
-                className="p-3.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-left transition-all group"
+                className="p-3.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 text-left transition group"
               >
-                <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 rounded-lg bg-amber-100/80 text-amber-600 flex items-center justify-center mb-2">
                   <Award className="h-4 w-4" />
                 </div>
-                <div className="text-xs font-bold text-slate-800">CBC Scores</div>
+                <div className="text-xs font-bold text-slate-900">CBC Scores</div>
                 <div className="text-[11px] text-slate-500">Formative & rubrics</div>
               </button>
 
               <button
                 onClick={() => onNavigate('school-reports')}
-                className="p-3.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-left transition-all group"
+                className="p-3.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 text-left transition group"
               >
-                <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 rounded-lg bg-emerald-100/80 text-emerald-600 flex items-center justify-center mb-2">
                   <BookOpen className="h-4 w-4" />
                 </div>
-                <div className="text-xs font-bold text-slate-800">Report Cards</div>
+                <div className="text-xs font-bold text-slate-900">Report Cards</div>
                 <div className="text-[11px] text-slate-500">Printable CBC slips</div>
               </button>
 
               <button
                 onClick={() => onNavigate('school-sms')}
-                className="p-3.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-left transition-all group"
+                className="p-3.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 text-left transition group"
               >
-                <div className="h-8 w-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 rounded-lg bg-purple-100/80 text-purple-600 flex items-center justify-center mb-2">
                   <Send className="h-4 w-4" />
                 </div>
-                <div className="text-xs font-bold text-slate-800">SMS Broadcast</div>
-                <div className="text-[11px] text-slate-500">Fee reminders & alerts</div>
+                <div className="text-xs font-bold text-slate-900">SMS Broadcast</div>
+                <div className="text-[11px] text-slate-500">Reminders & alerts</div>
               </button>
 
               <button
                 onClick={() => onNavigate('school-timetable')}
-                className="p-3.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-left transition-all group"
+                className="p-3.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 text-left transition group"
               >
-                <div className="h-8 w-8 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 rounded-lg bg-cyan-100/80 text-cyan-600 flex items-center justify-center mb-2">
                   <Clock className="h-4 w-4" />
                 </div>
-                <div className="text-xs font-bold text-slate-800">Timetable</div>
-                <div className="text-[11px] text-slate-500">Weekly class schedule</div>
+                <div className="text-xs font-bold text-slate-900">Timetable</div>
+                <div className="text-[11px] text-slate-500">Weekly schedules</div>
               </button>
 
               <button
                 onClick={() => onNavigate('school-classes')}
-                className="p-3.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-left transition-all group"
+                className="p-3.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 text-left transition group"
               >
-                <div className="h-8 w-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 rounded-lg bg-rose-100/80 text-rose-600 flex items-center justify-center mb-2">
                   <Sparkles className="h-4 w-4" />
                 </div>
-                <div className="text-xs font-bold text-slate-800">Class Streams</div>
+                <div className="text-xs font-bold text-slate-900">Class Streams</div>
                 <div className="text-[11px] text-slate-500">{classes.length} Streams configured</div>
               </button>
             </div>
           </div>
 
           {/* Enrollment Breakdown by Tier */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-bold text-slate-900">Enrolment Across CBC Levels</h2>
               <button
@@ -337,7 +317,7 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
         {/* Right 1 Col: Recent Payments & Upcoming Events */}
         <div className="space-y-6">
           {/* Recent Payments Stream */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-bold text-slate-900">Recent Fee Receipts</h2>
               <button
@@ -375,7 +355,7 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
           </div>
 
           {/* Upcoming School Events */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-slate-900">Upcoming Events</h2>
               <button
@@ -388,10 +368,10 @@ export const SchoolDashboard: React.FC<SchoolDashboardProps> = ({
 
             <div className="space-y-2.5">
               {upcomingEvents.map((evt) => (
-                <div key={evt.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                <div key={evt.id} className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-800">{evt.title}</span>
-                    <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
+                    <span className="font-bold text-slate-900">{evt.title}</span>
+                    <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
                       {evt.category}
                     </span>
                   </div>

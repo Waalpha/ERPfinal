@@ -264,7 +264,7 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
       </header>
 
       {/* Main Workspace Frame */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto overflow-hidden">
+      <div className="flex-1 flex w-full overflow-y-auto">
         {/* Tenant Grouped Navigation Sidebar (Desktop) */}
         <aside className="w-64 border-r border-slate-200 bg-white p-4 space-y-5 hidden lg:flex flex-col flex-shrink-0 overflow-y-auto">
           <div className="space-y-4">
