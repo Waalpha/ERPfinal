@@ -1,26 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Platform Users: Store global user profiles and persona roles
-    match /platform_users/{userId} {
-      allow read, write: if true;
-    }
-
-    // Tenants: Store enterprise organizations and their settings
-    match /tenants/{tenantId} {
-      allow read, write: if true;
-
-      // Nested collections per tenant: students, staff, classes, fees, etc.
-      match /{allSubcollections=**} {
-        allow read, write: if true;
-      }
-    }
-
-    // Fallback for any top-level collections
+    // Allow read and write for multi-tenant ERP operations
     match /{document=**} {
       allow read, write: if true;
     }
   }
 }
+
 

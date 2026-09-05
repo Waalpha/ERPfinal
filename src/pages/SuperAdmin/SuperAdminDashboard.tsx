@@ -38,7 +38,7 @@ import {
   Save
 } from 'lucide-react';
 import { Tenant, TenantPlan, TenantStatus, MAIN_DOMAIN, SubscriptionTierConfig } from '../../types';
-import { LogoUploader } from '../../components/LogoUploader';
+import { LogoUploader, FaviconUploader } from '../../components/LogoUploader';
 import { EditTenantModal } from '../../components/EditTenantModal';
 
 interface SuperAdminDashboardProps {
@@ -85,6 +85,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [editCustomDomainVal, setEditCustomDomainVal] = useState('');
   const [editPublicWebsiteVal, setEditPublicWebsiteVal] = useState('');
   const [editLogoUrlVal, setEditLogoUrlVal] = useState('');
+  const [editFaviconVal, setEditFaviconVal] = useState('');
   const [copiedTenantId, setCopiedTenantId] = useState<string | null>(null);
   const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
 
@@ -92,10 +93,24 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [platformNameInput, setPlatformNameInput] = useState(platformSettings?.name || 'DAVETECH');
   const [platformTaglineInput, setPlatformTaglineInput] = useState(platformSettings?.tagline || 'Enterprise Cloud & Multi-Tenant Engine');
   const [platformLogoUrlInput, setPlatformLogoUrlInput] = useState(platformSettings?.logoUrl || '');
+  const [platformFaviconUrlInput, setPlatformFaviconUrlInput] = useState(platformSettings?.faviconUrl || '');
   const [platformSupportEmailInput, setPlatformSupportEmailInput] = useState(platformSettings?.supportEmail || 'support@davetech.co.ke');
   const [platformSupportPhoneInput, setPlatformSupportPhoneInput] = useState(platformSettings?.supportPhone || '+254 700 000 000');
   const [platformStrictIsolationInput, setPlatformStrictIsolationInput] = useState(platformSettings?.strictIsolationEnforced ?? true);
   const [platformMpesaSandboxInput, setPlatformMpesaSandboxInput] = useState(platformSettings?.mpesaSandboxEnabled ?? true);
+  
+  // Public Website Content Editor State
+  const [heroBadgeInput, setHeroBadgeInput] = useState(platformSettings?.publicWebsiteContent?.heroBadgeText || 'DAVETECH 5.0 Enterprise Cloud Released — Multi-Tenant Architecture');
+  const [heroHeadlineInput, setHeroHeadlineInput] = useState(platformSettings?.publicWebsiteContent?.heroHeadline || 'One Powerful Platform. Unlimited Possibilities.');
+  const [heroSubheadlineInput, setHeroSubheadlineInput] = useState(platformSettings?.publicWebsiteContent?.heroSubheadline || 'Run your entire organization with DAVETECH Enterprise — a secure, intelligent and scalable cloud platform engineered for schools, colleges, universities, hospitals, clinics, retail shops, and growing enterprises.');
+  const [heroPrimaryCtaInput, setHeroPrimaryCtaInput] = useState(platformSettings?.publicWebsiteContent?.heroPrimaryCtaText || 'Book a Demo');
+  const [heroSecondaryCtaInput, setHeroSecondaryCtaInput] = useState(platformSettings?.publicWebsiteContent?.heroSecondaryCtaText || 'Explore Solutions');
+  const [solutionsTitleInput, setSolutionsTitleInput] = useState(platformSettings?.publicWebsiteContent?.solutionsTitle || 'Engineered for Every Institution & Enterprise');
+  const [solutionsSubtitleInput, setSolutionsSubtitleInput] = useState(platformSettings?.publicWebsiteContent?.solutionsSubtitle || 'Purpose-built tailored workflows designed specifically for academic excellence, healthcare operations, and commercial scale.');
+  const [pricingTitleInput, setPricingTitleInput] = useState(platformSettings?.publicWebsiteContent?.pricingTitle || 'Transparent, Predictable Enterprise Pricing');
+  const [pricingSubtitleInput, setPricingSubtitleInput] = useState(platformSettings?.publicWebsiteContent?.pricingSubtitle || 'Choose the ideal tier for your institution or business. Scale seamlessly as you grow.');
+  const [footerTaglineInput, setFooterTaglineInput] = useState(platformSettings?.publicWebsiteContent?.footerTagline || 'Empowering schools, colleges, universities, hospitals, and businesses with world-class cloud infrastructure.');
+
   const [platformSettingsSaveSuccess, setPlatformSettingsSaveSuccess] = useState<string | null>(null);
 
   React.useEffect(() => {
@@ -103,10 +118,23 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       setPlatformNameInput(platformSettings.name || 'DAVETECH');
       setPlatformTaglineInput(platformSettings.tagline || 'Enterprise Cloud & Multi-Tenant Engine');
       setPlatformLogoUrlInput(platformSettings.logoUrl || '');
+      setPlatformFaviconUrlInput(platformSettings.faviconUrl || '');
       setPlatformSupportEmailInput(platformSettings.supportEmail || 'support@davetech.co.ke');
       setPlatformSupportPhoneInput(platformSettings.supportPhone || '+254 700 000 000');
       setPlatformStrictIsolationInput(platformSettings.strictIsolationEnforced ?? true);
       setPlatformMpesaSandboxInput(platformSettings.mpesaSandboxEnabled ?? true);
+      if (platformSettings.publicWebsiteContent) {
+        setHeroBadgeInput(platformSettings.publicWebsiteContent.heroBadgeText || '');
+        setHeroHeadlineInput(platformSettings.publicWebsiteContent.heroHeadline || '');
+        setHeroSubheadlineInput(platformSettings.publicWebsiteContent.heroSubheadline || '');
+        setHeroPrimaryCtaInput(platformSettings.publicWebsiteContent.heroPrimaryCtaText || '');
+        setHeroSecondaryCtaInput(platformSettings.publicWebsiteContent.heroSecondaryCtaText || '');
+        setSolutionsTitleInput(platformSettings.publicWebsiteContent.solutionsTitle || '');
+        setSolutionsSubtitleInput(platformSettings.publicWebsiteContent.solutionsSubtitle || '');
+        setPricingTitleInput(platformSettings.publicWebsiteContent.pricingTitle || '');
+        setPricingSubtitleInput(platformSettings.publicWebsiteContent.pricingSubtitle || '');
+        setFooterTaglineInput(platformSettings.publicWebsiteContent.footerTagline || '');
+      }
     }
   }, [platformSettings]);
 
@@ -116,12 +144,25 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       name: platformNameInput.trim() || 'DAVETECH',
       tagline: platformTaglineInput.trim() || 'Enterprise Cloud & Multi-Tenant Engine',
       logoUrl: platformLogoUrlInput.trim() || undefined,
+      faviconUrl: platformFaviconUrlInput.trim() || undefined,
       supportEmail: platformSupportEmailInput.trim(),
       supportPhone: platformSupportPhoneInput.trim(),
       strictIsolationEnforced: platformStrictIsolationInput,
-      mpesaSandboxEnabled: platformMpesaSandboxInput
+      mpesaSandboxEnabled: platformMpesaSandboxInput,
+      publicWebsiteContent: {
+        heroBadgeText: heroBadgeInput,
+        heroHeadline: heroHeadlineInput,
+        heroSubheadline: heroSubheadlineInput,
+        heroPrimaryCtaText: heroPrimaryCtaInput,
+        heroSecondaryCtaText: heroSecondaryCtaInput,
+        solutionsTitle: solutionsTitleInput,
+        solutionsSubtitle: solutionsSubtitleInput,
+        pricingTitle: pricingTitleInput,
+        pricingSubtitle: pricingSubtitleInput,
+        footerTagline: footerTaglineInput
+      }
     });
-    setPlatformSettingsSaveSuccess('Master Platform settings and DAVETECH logo updated successfully!');
+    setPlatformSettingsSaveSuccess('Master Platform settings and public website content updated successfully!');
     setTimeout(() => setPlatformSettingsSaveSuccess(null), 4000);
   };
 
@@ -236,6 +277,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     setEditCustomDomainVal(t.customDomain || '');
     setEditPublicWebsiteVal(t.publicWebsite || '');
     setEditLogoUrlVal(t.logoUrl || '');
+    setEditFaviconVal(t.favicon || t.faviconUrl || '');
   };
 
   const handleSaveSubdomainEdit = async (e: React.FormEvent) => {
@@ -247,6 +289,8 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       customDomain: editCustomDomainVal.trim().toLowerCase() || undefined,
       publicWebsite: editPublicWebsiteVal.trim() || undefined,
       logoUrl: editLogoUrlVal.trim() || undefined,
+      favicon: editFaviconVal.trim() || undefined,
+      faviconUrl: editFaviconVal.trim() || undefined,
       dnsStatus: 'CONFIGURED'
     });
     setEditingSubdomainTenant(null);
@@ -1261,13 +1305,21 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   </p>
                 </div>
 
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
                   <LogoUploader
                     currentLogoUrl={platformLogoUrlInput}
                     onLogoChange={setPlatformLogoUrlInput}
                     entityName={platformNameInput || 'DAVETECH'}
                     label="DAVETECH Master Platform Logo"
                   />
+                  <div className="pt-3 border-t border-slate-200">
+                    <FaviconUploader
+                      currentFaviconUrl={platformFaviconUrlInput}
+                      onFaviconChange={setPlatformFaviconUrlInput}
+                      label="Master Platform Browser Favicon"
+                      sublabel="Upload 32x32px ICO or PNG icon for main platform browser tabs."
+                    />
+                  </div>
                 </div>
 
                 <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl">
@@ -1388,6 +1440,102 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                         />
                         <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                       </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Public Website Content Editor */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center space-x-2">
+                    <Globe className="h-4 w-4 text-indigo-600" />
+                    <span>Public Website Content Editor (Global CMS)</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">
+                    Edit headlines, subtitles, and messaging across the public marketing website. Changes apply instantly when saved.
+                  </p>
+
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Hero Eyebrow Badge Text</label>
+                      <input
+                        type="text"
+                        value={heroBadgeInput}
+                        onChange={(e) => setHeroBadgeInput(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Hero Headline</label>
+                        <input
+                          type="text"
+                          value={heroHeadlineInput}
+                          onChange={(e) => setHeroHeadlineInput(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Hero Subheadline</label>
+                        <textarea
+                          rows={2}
+                          value={heroSubheadlineInput}
+                          onChange={(e) => setHeroSubheadlineInput(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Hero Primary CTA Text</label>
+                        <input
+                          type="text"
+                          value={heroPrimaryCtaInput}
+                          onChange={(e) => setHeroPrimaryCtaInput(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Hero Secondary CTA Text</label>
+                        <input
+                          type="text"
+                          value={heroSecondaryCtaInput}
+                          onChange={(e) => setHeroSecondaryCtaInput(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Solutions Section Title</label>
+                        <input
+                          type="text"
+                          value={solutionsTitleInput}
+                          onChange={(e) => setSolutionsTitleInput(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Pricing Section Title</label>
+                        <input
+                          type="text"
+                          value={pricingTitleInput}
+                          onChange={(e) => setPricingTitleInput(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Footer Tagline</label>
+                      <input
+                        type="text"
+                        value={footerTaglineInput}
+                        onChange={(e) => setFooterTaglineInput(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                      />
                     </div>
                   </div>
                 </div>
@@ -1564,7 +1712,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
             <form onSubmit={handleSaveSubdomainEdit} className="space-y-4 text-xs">
               {/* Logo / Crest Uploader */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-3">
                 <LogoUploader
                   currentLogoUrl={editLogoUrlVal}
                   onLogoChange={setEditLogoUrlVal}
@@ -1572,6 +1720,14 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   label="Tenant Logo / Crest"
                   compact={true}
                 />
+                <div className="pt-2 border-t border-slate-200">
+                  <FaviconUploader
+                    currentFaviconUrl={editFaviconVal}
+                    onFaviconChange={setEditFaviconVal}
+                    label="Tenant Tab Favicon"
+                    sublabel="Upload 32x32px favicon icon."
+                  />
+                </div>
               </div>
 
               <div>

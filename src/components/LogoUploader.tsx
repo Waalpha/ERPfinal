@@ -11,6 +11,55 @@ interface LogoUploaderProps {
 }
 
 // Preset school crests & organizational emblems for quick-start
+const compressImage = (file: File, maxWidth: number, maxHeight: number, quality = 0.85): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(img.src);
+        return;
+      }
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      resolve(canvas.toDataURL(mimeType, quality));
+    };
+    img.onerror = reject;
+
+    reader.readAsDataURL(file);
+  });
+};
+
 const SAMPLE_LOGOS = [
   {
     name: 'Academic Shield (Gold & Navy)',
@@ -40,28 +89,25 @@ export const LogoUploader: React.FC<LogoUploaderProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileProcess = (file: File) => {
+  const handleFileProcess = async (file: File) => {
     setErrorMsg(null);
     if (!file.type.startsWith('image/')) {
       setErrorMsg('Please select a valid image file (PNG, JPG, SVG, WebP)');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Image size exceeds 5MB. Please choose a smaller file.');
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('Image size exceeds 10MB. Please choose a smaller file.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        onLogoChange(e.target.result as string);
-      }
-    };
-    reader.onerror = () => {
-      setErrorMsg('Failed to read file. Please try another image.');
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Automatically compress and resize to max 400x400 for optimal storage & Firestore persistence
+      const compressedDataUrl = await compressImage(file, 400, 400, 0.85);
+      onLogoChange(compressedDataUrl);
+    } catch {
+      setErrorMsg('Failed to process image. Please try another file.');
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -317,6 +363,150 @@ export const LogoUploader: React.FC<LogoUploaderProps> = ({
           ))}
         </div>
       </div>
+    </div>
+  );
+};
+
+interface FaviconUploaderProps {
+  currentFaviconUrl?: string;
+  onFaviconChange: (faviconUrl: string) => void;
+  label?: string;
+  sublabel?: string;
+}
+
+export const FaviconUploader: React.FC<FaviconUploaderProps> = ({
+  currentFaviconUrl,
+  onFaviconChange,
+  label = 'Browser Tab Favicon (ICO / PNG)',
+  sublabel = 'Recommended square image (32x32px or 64x64px ICO, PNG or SVG) displayed in browser tabs.'
+}) => {
+  const [isUrlMode, setIsUrlMode] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileProcess = async (file: File) => {
+    setErrorMsg(null);
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('Please select a valid image file (ICO, PNG, SVG)');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('Favicon file exceeds 10MB limit.');
+      return;
+    }
+    try {
+      // Automatically compress and resize to 64x64 square favicon
+      const compressedFavicon = await compressImage(file, 64, 64, 0.9);
+      onFaviconChange(compressedFavicon);
+    } catch {
+      setErrorMsg('Failed to process favicon file.');
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileProcess(file);
+  };
+
+  const handleApplyUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (urlInput.trim()) {
+      onFaviconChange(urlInput.trim());
+      setIsUrlMode(false);
+      setUrlInput('');
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <label className="block text-xs font-bold text-slate-800">{label}</label>
+          <p className="text-[11px] text-slate-500">{sublabel}</p>
+        </div>
+        {currentFaviconUrl && (
+          <button
+            type="button"
+            onClick={() => onFaviconChange('')}
+            className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex items-center space-x-1"
+          >
+            <Trash2 className="h-3 w-3" />
+            <span>Remove</span>
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-center space-x-4 p-3 bg-white border border-slate-200 rounded-2xl">
+        <div className="w-12 h-12 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs">
+          {currentFaviconUrl ? (
+            <img src={currentFaviconUrl} alt="Favicon" className="w-6 h-6 object-contain" />
+          ) : (
+            <ImageIcon className="w-5 h-5 text-slate-400" />
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition"
+            >
+              Upload Favicon
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsUrlMode(!isUrlMode)}
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1 transition"
+            >
+              <LinkIcon className="w-3 h-3" />
+              <span>URL</span>
+            </button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </div>
+      </div>
+
+      {errorMsg && (
+        <p className="text-[11px] font-semibold text-rose-600 flex items-center space-x-1">
+          <AlertCircle className="w-3 h-3" />
+          <span>{errorMsg}</span>
+        </p>
+      )}
+
+      {isUrlMode && (
+        <form onSubmit={handleApplyUrl} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <input
+            type="url"
+            placeholder="https://example.com/favicon.ico"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+          />
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={() => setIsUrlMode(false)}
+              className="px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-200 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-xs"
+            >
+              Apply URL
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 };

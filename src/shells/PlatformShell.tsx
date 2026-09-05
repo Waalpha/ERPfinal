@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { SuperAdminDashboard } from '../pages/SuperAdmin/SuperAdminDashboard';
+import { PublicMarketingWebsite } from '../components/marketing/PublicMarketingWebsite';
 import { LogoUploader } from '../components/LogoUploader';
 import {
   Building2,
@@ -25,7 +26,8 @@ import {
   LogOut,
   RefreshCw,
   Sliders,
-  DollarSign
+  DollarSign,
+  ArrowLeft
 } from 'lucide-react';
 import { TenantType, TenantPlan } from '../types';
 import { MAIN_DOMAIN_SUFFIX } from '../services/TenantResolver';
@@ -46,6 +48,7 @@ export const PlatformShell: React.FC = () => {
     platformSettings
   } = useAuth();
 
+  const [viewMode, setViewMode] = useState<'marketing' | 'super-admin'>('marketing');
   const [currentTab, setCurrentTab] = useState<string>('super-admin-overview');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
@@ -154,8 +157,26 @@ export const PlatformShell: React.FC = () => {
     }
   };
 
+  if (viewMode === 'marketing') {
+    return <PublicMarketingWebsite onOpenSuperAdmin={() => setViewMode('super-admin')} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+      {/* Top Banner to Return to Public Marketing Website */}
+      <div className="bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-slate-900 px-4 py-2 border-b border-indigo-500/30 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2 text-indigo-200">
+          <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+          <span>Viewing Super Admin ERP Dashboard</span>
+        </div>
+        <button
+          onClick={() => setViewMode('marketing')}
+          className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900/80 hover:bg-slate-900 text-white rounded-lg border border-indigo-500/30 transition-colors font-medium"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Return to Public Marketing Website
+        </button>
+      </div>
+
       {/* Top Master Platform Header */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">

@@ -58,8 +58,13 @@ import {
   SubscriptionTierConfig,
   DEFAULT_SUBSCRIPTION_TIERS,
   PlatformSettings,
-  DEFAULT_PLATFORM_SETTINGS
+  DEFAULT_PLATFORM_SETTINGS,
+  TenantWebsiteConfig,
+  ModulePermissionKey,
+  PermissionOperation,
+  DEFAULT_ROLE_PERMISSIONS
 } from '../types';
+import { generateDefaultWebsiteConfig } from '../services/TenantWebsiteGenerator';
 import {
   INITIAL_TENANTS,
   INITIAL_USERS,
@@ -116,6 +121,7 @@ import {
 interface AuthContextType {
   user: AppUser | null;
   tenant: Tenant | null;
+  currentTenant: Tenant | null;
   isPlatformMode: boolean;
   loading: boolean;
   error: string | null;
@@ -125,6 +131,20 @@ interface AuthContextType {
   switchUserPersona: (userId: string) => void;
   switchTenantAsSuperAdmin: (tenantId: string) => void;
   switchToPlatformMaster: () => void;
+
+  // Website & CMS
+  websiteConfig: TenantWebsiteConfig | null;
+  updateWebsiteConfig: (config: TenantWebsiteConfig) => Promise<void>;
+
+  // Audit Logging
+  logAuditAction: (params: {
+    action: string;
+    module?: string;
+    record?: string;
+    result?: 'SUCCESS' | 'FAILURE';
+    details: string;
+    category?: AuditLog['category'];
+  }) => Promise<void>;
 
   // Platform & Super Admin operations
   allTenants: Tenant[];
@@ -210,7 +230,8 @@ interface AuthContextType {
   promoteStudents: (studentIds: string[], targetGrade: PrimaryGradeLevel | 'Graduated') => Promise<void>;
 
   addStaff: (staffData: Omit<StaffMember, 'id' | 'tenantId'>) => Promise<StaffMember>;
-  updateStaff: (staffId: string, updates: Partial<StaffMember>) => Promise<void>;
+  updateStaff: (staffOrId: StaffMember | string, updates?: Partial<StaffMember>) => Promise<void>;
+  deleteStaff: (staffId: string) => Promise<void>;
 
   addClassStream: (classData: Omit<ClassStream, 'id' | 'tenantId' | 'enrolledCount'>) => Promise<ClassStream>;
   updateClassStream: (classId: string, updates: Partial<ClassStream>) => Promise<void>;
@@ -273,6 +294,7 @@ interface AuthContextType {
   canAccessModule: (moduleName: string) => boolean;
   hasRole: (roles: UserRole[]) => boolean;
   hasPermission: (action: PermissionAction, resource?: PermissionResource) => boolean;
+  hasModulePermission: (moduleKey: ModulePermissionKey, op: PermissionOperation) => boolean;
 
   // Cloud Firestore Sync Actions
   isSyncingFirestore: boolean;
@@ -478,42 +500,171 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Helper to load all subcollections for a tenant from Firestore
+  const loadTenantDataFromFirestore = useCallback(async (tenantId: string) => {
+    try {
+      const fetchSubcoll = async <T,>(subcoll: string): Promise<T[]> => {
+        try {
+          const snap = await getDocs(collection(db, 'tenants', tenantId, subcoll));
+          return snap.docs.map(d => d.data() as T);
+        } catch {
+          return [];
+        }
+      };
+
+      const [
+        students, staff, classes, assessments, feeStructures, payments, invoices, attendance,
+        timetable, assignments, discipline, events, notifications, auditLogs,
+        cDepts, cCourses, cStudents, libBooks, cFees, cInvoices, cPayments,
+        theoProgs, theoStudents, theoLogs, theoLib, theoInvoices, theoPayments,
+        retProds, retSales, retSupps, retCusts, retInvoices, retPayments,
+        hospPats, hospCons, hospInvs, hospPays, hospTariffs
+      ] = await Promise.all([
+        fetchSubcoll<Student>('students'),
+        fetchSubcoll<StaffMember>('staff'),
+        fetchSubcoll<ClassStream>('classes'),
+        fetchSubcoll<AssessmentRecord>('assessments'),
+        fetchSubcoll<FeeStructureItem>('fee_structures'),
+        fetchSubcoll<FeePayment>('payments'),
+        fetchSubcoll<FeeInvoice>('invoices'),
+        fetchSubcoll<AttendanceRecord>('attendance'),
+        fetchSubcoll<TimetableSlot>('timetable'),
+        fetchSubcoll<Assignment>('assignments'),
+        fetchSubcoll<DisciplineIncident>('discipline'),
+        fetchSubcoll<SchoolCalendarEvent>('events'),
+        fetchSubcoll<NotificationBroadcast>('notifications'),
+        fetchSubcoll<AuditLog>('audit_logs'),
+        fetchSubcoll<CollegeDepartment>('college_departments'),
+        fetchSubcoll<CollegeCourse>('college_courses'),
+        fetchSubcoll<CollegeStudent>('college_students'),
+        fetchSubcoll<LibraryBook>('library_books'),
+        fetchSubcoll<CollegeFeeStructureItem>('college_fee_structures'),
+        fetchSubcoll<CollegeInvoice>('college_invoices'),
+        fetchSubcoll<CollegePayment>('college_payments'),
+        fetchSubcoll<TheologyProgram>('theology_programs'),
+        fetchSubcoll<TheologyStudent>('theology_students'),
+        fetchSubcoll<MinistryPracticumLog>('theology_practicum_logs'),
+        fetchSubcoll<TheologyLibraryResource>('theology_library'),
+        fetchSubcoll<TheologyInvoice>('theology_invoices'),
+        fetchSubcoll<TheologyFeePayment>('theology_payments'),
+        fetchSubcoll<RetailProduct>('retail_products'),
+        fetchSubcoll<RetailSale>('retail_sales'),
+        fetchSubcoll<RetailSupplier>('retail_suppliers'),
+        fetchSubcoll<RetailCustomer>('retail_customers'),
+        fetchSubcoll<RetailCustomerInvoice>('retail_invoices'),
+        fetchSubcoll<RetailCustomerPayment>('retail_customer_payments'),
+        fetchSubcoll<HospitalPatient>('hospital_patients'),
+        fetchSubcoll<MedicalConsultation>('medical_consultations'),
+        fetchSubcoll<HospitalBillingInvoice>('hospital_invoices'),
+        fetchSubcoll<HospitalBillingPayment>('hospital_payments'),
+        fetchSubcoll<HospitalServiceTariff>('hospital_tariffs'),
+      ]);
+
+      if (students.length > 0) setStudentsMap(prev => ({ ...prev, [tenantId]: students }));
+      if (staff.length > 0) setStaffMap(prev => ({ ...prev, [tenantId]: staff }));
+      if (classes.length > 0) setClassesMap(prev => ({ ...prev, [tenantId]: classes }));
+      if (assessments.length > 0) setAssessmentsMap(prev => ({ ...prev, [tenantId]: assessments }));
+      if (feeStructures.length > 0) setFeeStructureMap(prev => ({ ...prev, [tenantId]: feeStructures }));
+      if (payments.length > 0) setPaymentsMap(prev => ({ ...prev, [tenantId]: payments }));
+      if (invoices.length > 0) setInvoicesMap(prev => ({ ...prev, [tenantId]: invoices }));
+      if (attendance.length > 0) setAttendanceMap(prev => ({ ...prev, [tenantId]: attendance }));
+      if (timetable.length > 0) setTimetableMap(prev => ({ ...prev, [tenantId]: timetable }));
+      if (assignments.length > 0) setAssignmentsMap(prev => ({ ...prev, [tenantId]: assignments }));
+      if (discipline.length > 0) setDisciplineMap(prev => ({ ...prev, [tenantId]: discipline }));
+      if (events.length > 0) setEventsMap(prev => ({ ...prev, [tenantId]: events }));
+      if (notifications.length > 0) setNotificationsMap(prev => ({ ...prev, [tenantId]: notifications }));
+      if (auditLogs.length > 0) setAuditLogsMap(prev => ({ ...prev, [tenantId]: auditLogs }));
+      if (cDepts.length > 0) setCollegeDepartmentsMap(prev => ({ ...prev, [tenantId]: cDepts }));
+      if (cCourses.length > 0) setCollegeCoursesMap(prev => ({ ...prev, [tenantId]: cCourses }));
+      if (cStudents.length > 0) setCollegeStudentsMap(prev => ({ ...prev, [tenantId]: cStudents }));
+      if (libBooks.length > 0) setLibraryBooksMap(prev => ({ ...prev, [tenantId]: libBooks }));
+      if (cFees.length > 0) setCollegeFeeStructureMap(prev => ({ ...prev, [tenantId]: cFees }));
+      if (cInvoices.length > 0) setCollegeInvoicesMap(prev => ({ ...prev, [tenantId]: cInvoices }));
+      if (cPayments.length > 0) setCollegePaymentsMap(prev => ({ ...prev, [tenantId]: cPayments }));
+      if (theoProgs.length > 0) setTheologyProgramsMap(prev => ({ ...prev, [tenantId]: theoProgs }));
+      if (theoStudents.length > 0) setTheologyStudentsMap(prev => ({ ...prev, [tenantId]: theoStudents }));
+      if (theoLogs.length > 0) setTheologyPracticumLogsMap(prev => ({ ...prev, [tenantId]: theoLogs }));
+      if (theoLib.length > 0) setTheologyLibraryMap(prev => ({ ...prev, [tenantId]: theoLib }));
+      if (theoInvoices.length > 0) setTheologyInvoicesMap(prev => ({ ...prev, [tenantId]: theoInvoices }));
+      if (theoPayments.length > 0) setTheologyPaymentsMap(prev => ({ ...prev, [tenantId]: theoPayments }));
+      if (retProds.length > 0) setRetailProductsMap(prev => ({ ...prev, [tenantId]: retProds }));
+      if (retSales.length > 0) setRetailSalesMap(prev => ({ ...prev, [tenantId]: retSales }));
+      if (retSupps.length > 0) setRetailSuppliersMap(prev => ({ ...prev, [tenantId]: retSupps }));
+      if (retCusts.length > 0) setRetailCustomersMap(prev => ({ ...prev, [tenantId]: retCusts }));
+      if (retInvoices.length > 0) setRetailInvoicesMap(prev => ({ ...prev, [tenantId]: retInvoices }));
+      if (retPayments.length > 0) setRetailCustomerPaymentsMap(prev => ({ ...prev, [tenantId]: retPayments }));
+      if (hospPats.length > 0) setHospitalPatientsMap(prev => ({ ...prev, [tenantId]: hospPats }));
+      if (hospCons.length > 0) setMedicalConsultationsMap(prev => ({ ...prev, [tenantId]: hospCons }));
+      if (hospInvs.length > 0) setHospitalInvoicesMap(prev => ({ ...prev, [tenantId]: hospInvs }));
+      if (hospPays.length > 0) setHospitalPaymentsMap(prev => ({ ...prev, [tenantId]: hospPays }));
+      if (hospTariffs.length > 0) setHospitalTariffsMap(prev => ({ ...prev, [tenantId]: hospTariffs }));
+
+      // Load website config
+      try {
+        const webSnap = await getDoc(doc(db, 'tenants', tenantId, 'website', 'config'));
+        if (webSnap.exists()) {
+          setWebsiteConfigMap(prev => ({ ...prev, [tenantId]: webSnap.data() as TenantWebsiteConfig }));
+        }
+      } catch {}
+    } catch (err) {
+      console.warn(`Firestore data load notice for tenant ${tenantId}:`, err);
+    }
+  }, []);
+
   // Fetch tenants, platform settings, and subscription tiers from Firestore on mount
   useEffect(() => {
     const fetchFirestoreData = async () => {
+      // 1. Fetch Tenants
       try {
         const tenantsSnap = await getDocs(collection(db, 'tenants'));
         if (!tenantsSnap.empty) {
           const loadedTenants: Tenant[] = [];
-          const loadedFeeStructures: Record<string, FeeStructureItem[]> = {};
           for (const docSnap of tenantsSnap.docs) {
             const tData = docSnap.data() as Tenant;
             loadedTenants.push(tData);
-
-            try {
-              const feesSnap = await getDocs(collection(db, 'tenants', tData.id, 'fee_structures'));
-              const tenantFees: FeeStructureItem[] = [];
-              feesSnap.forEach(fSnap => {
-                tenantFees.push(fSnap.data() as FeeStructureItem);
-              });
-              if (tenantFees.length > 0) {
-                loadedFeeStructures[tData.id] = tenantFees;
-              }
-            } catch (e) {}
+            // Load subcollections for each tenant
+            loadTenantDataFromFirestore(tData.id);
           }
           if (loadedTenants.length > 0) {
             setAllTenants(loadedTenants);
           }
-          if (Object.keys(loadedFeeStructures).length > 0) {
-            setFeeStructureMap(prev => ({ ...prev, ...loadedFeeStructures }));
+        }
+      } catch (tErr) {
+        console.warn('Note: Could not retrieve tenants from Firestore on mount:', tErr);
+      }
+
+      // 2. Fetch Global Platform Users
+      try {
+        const usersSnap = await getDocs(collection(db, 'platform_users'));
+        if (!usersSnap.empty) {
+          const loadedUsers: AppUser[] = [];
+          usersSnap.forEach(uSnap => {
+            loadedUsers.push(uSnap.data() as AppUser);
+          });
+          if (loadedUsers.length > 0) {
+            setAllUsers(prev => {
+              const map = new Map(prev.map(u => [u.uid, u]));
+              loadedUsers.forEach(u => map.set(u.uid, u));
+              return Array.from(map.values());
+            });
           }
         }
+      } catch (uErr) {
+        console.warn('Note: Could not retrieve platform users from Firestore on mount:', uErr);
+      }
 
+      // 3. Fetch Global Platform Branding
+      try {
         const brandingDoc = await getDoc(doc(db, 'platform_settings', 'global_branding'));
         if (brandingDoc.exists()) {
           setPlatformSettings(prev => ({ ...prev, ...brandingDoc.data() }));
         }
+      } catch (bErr) {
+        console.warn('Note: Could not retrieve platform branding from Firestore on mount:', bErr);
+      }
 
+      // 4. Fetch Platform Subscription Tiers
+      try {
         const tiersSnap = await getDocs(collection(db, 'platform_settings'));
         const loadedTiers: SubscriptionTierConfig[] = [];
         tiersSnap.forEach(docSnap => {
@@ -528,12 +679,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return Array.from(map.values());
           });
         }
-      } catch (err) {
-        console.error('Error fetching data from Firestore on mount:', err);
+      } catch (tierErr) {
+        console.warn('Note: Could not retrieve subscription tiers from Firestore on mount:', tierErr);
       }
     };
     fetchFirestoreData();
-  }, []);
+  }, [loadTenantDataFromFirestore]);
+
+  // When active tenant changes, ensure its data is loaded
+  useEffect(() => {
+    if (tenant?.id) {
+      loadTenantDataFromFirestore(tenant.id);
+    }
+  }, [tenant?.id, loadTenantDataFromFirestore]);
 
   const logAuditEvent = useCallback((action: string, details: string, category: AuditLog['category'] = 'SETTINGS') => {
     if (!tenant || !user) return;
@@ -551,6 +709,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newLog, ...(prev[tenant.id] || [])]
     }));
+  }, [tenant, user]);
+
+  const [websiteConfigMap, setWebsiteConfigMap] = useState<Record<string, TenantWebsiteConfig>>(() => {
+    try {
+      const saved = localStorage.getItem('davetech_website_configs');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {};
+  });
+
+  const websiteConfig = useMemo<TenantWebsiteConfig | null>(() => {
+    if (!tenant) return null;
+    if (websiteConfigMap[tenant.id]) return websiteConfigMap[tenant.id];
+    return generateDefaultWebsiteConfig(tenant);
+  }, [tenant, websiteConfigMap]);
+
+  // Dynamic Document Title and Favicon Sync
+  useEffect(() => {
+    const activeFavicon = tenant?.favicon || tenant?.faviconUrl || platformSettings?.faviconUrl;
+    const activeName = tenant?.name ? `${tenant.name} - Portal` : (platformSettings?.name ? `${platformSettings.name} - Enterprise Cloud ERP` : 'DAVETECH');
+    
+    document.title = activeName;
+    
+    if (activeFavicon) {
+      let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = activeFavicon;
+    }
+  }, [tenant, platformSettings]);
+
+  const updateWebsiteConfig = useCallback(async (config: TenantWebsiteConfig) => {
+    if (!tenant) return;
+    setWebsiteConfigMap(prev => {
+      const next = { ...prev, [tenant.id]: config };
+      try {
+        localStorage.setItem('davetech_website_configs', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'website', 'config'), cleanFirestoreData(config), { merge: true });
+    } catch (err) {
+      console.warn("Firestore website config sync notice:", err);
+    }
+  }, [tenant]);
+
+  const logAuditAction = useCallback(async (params: {
+    action: string;
+    module?: string;
+    record?: string;
+    result?: 'SUCCESS' | 'FAILURE';
+    details: string;
+    category?: AuditLog['category'];
+  }) => {
+    if (!tenant || !user) return;
+    const newLog: AuditLog = {
+      id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      tenantId: tenant.id,
+      userId: user.uid,
+      userEmail: user.email,
+      userName: user.displayName,
+      action: params.action,
+      module: params.module || 'SYSTEM',
+      record: params.record || '',
+      result: params.result || 'SUCCESS',
+      details: params.details,
+      category: params.category || 'SETTINGS',
+      timestamp: new Date().toISOString()
+    };
+
+    setAuditLogsMap(prev => ({
+      ...prev,
+      [tenant.id]: [newLog, ...(prev[tenant.id] || [])]
+    }));
+
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'audit_logs', newLog.id), cleanFirestoreData(newLog), { merge: true });
+    } catch (err) {
+      console.warn("Firestore audit log sync notice:", err);
+    }
   }, [tenant, user]);
 
   const loginWithGoogle = async () => {
@@ -696,7 +939,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     logAuditEvent('TENANT_UPDATED', `Updated organization profile parameters: ${Object.keys(updates).join(', ')}`);
     try {
-      await updateDoc(doc(db, 'tenants', tenantId), cleanFirestoreData(updates));
+      await setDoc(doc(db, 'tenants', tenantId), cleanFirestoreData(updates), { merge: true });
     } catch (err) {
       console.error('Failed to update tenant in Firestore:', err);
     }
@@ -729,7 +972,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     logAuditEvent('TENANT_STATUS_CHANGED', `Changed tenant status to ${status}`);
     try {
-      await updateDoc(doc(db, 'tenants', tenantId), cleanFirestoreData({ status }));
+      await setDoc(doc(db, 'tenants', tenantId), cleanFirestoreData({ status }), { merge: true });
     } catch (err) {
       console.error('Failed to update tenant status in Firestore:', err);
     }
@@ -742,7 +985,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     logAuditEvent('PLAN_UPGRADED', `Updated organization subscription plan to ${plan}`);
     try {
-      await updateDoc(doc(db, 'tenants', tenantId), cleanFirestoreData({ plan }));
+      await setDoc(doc(db, 'tenants', tenantId), cleanFirestoreData({ plan }), { merge: true });
     } catch (err) {
       console.error('Failed to update tenant plan in Firestore:', err);
     }
@@ -795,18 +1038,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const toggleTenantModule = async (tenantId: string, moduleId: string) => {
+    let updatedModules: string[] = [];
     setAllTenants(prev => prev.map(t => {
       if (t.id !== tenantId) return t;
       const hasMod = t.modules.includes(moduleId);
-      const newModules = hasMod ? t.modules.filter(m => m !== moduleId) : [...t.modules, moduleId];
-      return { ...t, modules: newModules };
+      updatedModules = hasMod ? t.modules.filter(m => m !== moduleId) : [...t.modules, moduleId];
+      return { ...t, modules: updatedModules };
     }));
     if (tenant?.id === tenantId) {
-      const hasMod = tenant.modules.includes(moduleId);
-      const newModules = hasMod ? tenant.modules.filter(m => m !== moduleId) : [...tenant.modules, moduleId];
-      setTenant({ ...tenant, modules: newModules });
+      setTenant(prev => prev ? { ...prev, modules: updatedModules } : null);
     }
     logAuditEvent('MODULE_TOGGLED', `Toggled ERP module ${moduleId}`);
+    try {
+      await setDoc(doc(db, 'tenants', tenantId), cleanFirestoreData({ modules: updatedModules }), { merge: true });
+    } catch (err) {
+      console.error('Failed to update tenant modules in Firestore:', err);
+    }
   };
 
   const createPlatformUser = async (userData: Omit<AppUser, 'uid' | 'createdAt'>): Promise<AppUser> => {
@@ -817,6 +1064,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     setAllUsers(prev => [newUser, ...prev]);
     logAuditEvent('USER_CREATED', `Created new user account for ${newUser.displayName} (${newUser.role})`);
+    try {
+      await setDoc(doc(db, 'platform_users', newUser.uid), cleanFirestoreData(newUser), { merge: true });
+    } catch (err) {
+      console.error('Failed to save platform user to Firestore:', err);
+    }
     return newUser;
   };
 
@@ -826,11 +1078,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(prev => prev ? { ...prev, role: newRole } : null);
     }
     logAuditEvent('USER_ROLE_CHANGED', `Changed user ${userId} role to ${newRole}`);
+    try {
+      await setDoc(doc(db, 'platform_users', userId), cleanFirestoreData({ role: newRole }), { merge: true });
+    } catch (err) {
+      console.error('Failed to update user role in Firestore:', err);
+    }
   };
 
   const toggleUserActiveStatus = async (userId: string) => {
-    setAllUsers(prev => prev.map(u => u.uid === userId ? { ...u, isActive: !u.isActive } : u));
+    let nextStatus = true;
+    setAllUsers(prev => prev.map(u => {
+      if (u.uid === userId) {
+        nextStatus = !u.isActive;
+        return { ...u, isActive: nextStatus };
+      }
+      return u;
+    }));
     logAuditEvent('USER_STATUS_TOGGLED', `Toggled active status for user ${userId}`);
+    try {
+      await setDoc(doc(db, 'platform_users', userId), cleanFirestoreData({ isActive: nextStatus }), { merge: true });
+    } catch (err) {
+      console.error('Failed to toggle user status in Firestore:', err);
+    }
   };
 
   // TENANT ISOLATED DATA GETTERS
@@ -1157,6 +1426,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       [tenant.id]: [newInvoice, ...(prev[tenant.id] || [])]
     }));
 
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'students', newStudent.id), cleanFirestoreData(newStudent), { merge: true });
+      await setDoc(doc(db, 'tenants', tenant.id, 'invoices', newInvoice.id), cleanFirestoreData(newInvoice), { merge: true });
+    } catch (err) {
+      console.error("Error saving admitted student to Firestore:", err);
+    }
+
     logAuditEvent('STUDENT_ADMITTED', `Enrolled learner ${newStudent.firstName} ${newStudent.lastName} (${newStudent.admissionNo}) into ${newStudent.grade} ${newStudent.stream}`, 'ADMISSION');
     return newStudent;
   };
@@ -1167,6 +1443,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).map(s => s.id === studentId ? { ...s, ...updates, updatedAt: new Date().toISOString() } : s)
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'students', studentId), cleanFirestoreData(updates), { merge: true });
+    } catch (err) {
+      console.error("Error updating student in Firestore:", err);
+    }
     logAuditEvent('STUDENT_UPDATED', `Updated details for student ID ${studentId}`, 'ADMISSION');
   };
 
@@ -1176,6 +1457,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).filter(s => s.id !== studentId)
     }));
+    try {
+      await deleteDoc(doc(db, 'tenants', tenant.id, 'students', studentId));
+    } catch (err) {
+      console.error("Error deleting student from Firestore:", err);
+    }
     logAuditEvent('STUDENT_DELETED', `Deleted student ID ${studentId} from roster`, 'ADMISSION');
   };
 
@@ -1191,6 +1477,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { ...s, grade: targetGrade };
       })
     }));
+    for (const sid of studentIds) {
+      try {
+        const updatePayload = targetGrade === 'Graduated' ? { status: 'GRADUATED' } : { grade: targetGrade };
+        await setDoc(doc(db, 'tenants', tenant.id, 'students', sid), cleanFirestoreData(updatePayload), { merge: true });
+      } catch {}
+    }
     logAuditEvent('STUDENTS_PROMOTED', `Promoted ${studentIds.length} learners to ${targetGrade}`, 'ACADEMICS');
   };
 
@@ -1206,17 +1498,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newStaff, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'staff', newStaff.id), cleanFirestoreData(newStaff), { merge: true });
+    } catch (err) {
+      console.error("Error saving new staff to Firestore:", err);
+    }
     logAuditEvent('STAFF_HIRED', `Added staff member ${newStaff.fullName} (${newStaff.designation})`, 'SETTINGS');
     return newStaff;
   };
 
-  const updateStaff = async (staffId: string, updates: Partial<StaffMember>) => {
+  const updateStaff = async (staffOrId: StaffMember | string, maybeUpdates?: Partial<StaffMember>) => {
     if (!tenant) return;
+    const staffId = typeof staffOrId === 'string' ? staffOrId : staffOrId.id;
+    const updates = typeof staffOrId === 'string' ? (maybeUpdates || {}) : staffOrId;
     setStaffMap(prev => ({
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).map(s => s.id === staffId ? { ...s, ...updates } : s)
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'staff', staffId), cleanFirestoreData(updates), { merge: true });
+    } catch (err) {
+      console.error("Error saving staff update to Firestore:", err);
+    }
     logAuditEvent('STAFF_UPDATED', `Updated staff record for ${staffId}`, 'SETTINGS');
+  };
+
+  const deleteStaff = async (staffId: string) => {
+    if (!tenant) return;
+    setStaffMap(prev => ({
+      ...prev,
+      [tenant.id]: (prev[tenant.id] || []).filter(s => s.id !== staffId)
+    }));
+    try {
+      await deleteDoc(doc(db, 'tenants', tenant.id, 'staff', staffId));
+    } catch (err) {
+      console.error("Error deleting staff from Firestore:", err);
+    }
+    logAuditEvent('STAFF_DELETED', `Deleted staff record ${staffId}`, 'SETTINGS');
   };
 
   // CLASSES & STREAMS
@@ -1232,6 +1550,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [...(prev[tenant.id] || []), newClass]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'classes', newClass.id), cleanFirestoreData(newClass), { merge: true });
+    } catch (err) {
+      console.error("Error adding class stream to Firestore:", err);
+    }
     logAuditEvent('CLASS_CREATED', `Created class stream ${newClass.grade} ${newClass.streamName}`, 'ACADEMICS');
     return newClass;
   };
@@ -1242,6 +1565,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).map(c => c.id === classId ? { ...c, ...updates } : c)
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'classes', classId), cleanFirestoreData(updates), { merge: true });
+    } catch (err) {
+      console.error("Error updating class stream in Firestore:", err);
+    }
   };
 
   // ASSESSMENTS
@@ -1258,6 +1586,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newRecord, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'assessments', newRecord.id), cleanFirestoreData(newRecord), { merge: true });
+    } catch (err) {
+      console.error("Error recording assessment to Firestore:", err);
+    }
     logAuditEvent('ASSESSMENT_RECORDED', `Logged ${assessmentData.subjectName} assessment score (${percentage}%) for ${assessmentData.studentName}`, 'ACADEMICS');
     return newRecord;
   };
@@ -1281,6 +1614,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         [tenant.id]: [...formattedRecords, ...filtered]
       };
     });
+    for (const rec of formattedRecords) {
+      try {
+        await setDoc(doc(db, 'tenants', tenant.id, 'attendance', rec.id), cleanFirestoreData(rec), { merge: true });
+      } catch {}
+    }
     logAuditEvent('ATTENDANCE_MARKED', `Submitted roll call for ${records.length} students on ${records[0]?.date}`, 'ACADEMICS');
   };
 
@@ -1358,6 +1696,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     }));
 
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'payments', newPayment.id), cleanFirestoreData(newPayment), { merge: true });
+    } catch (err) {
+      console.error("Error recording payment in Firestore:", err);
+    }
+
     logAuditEvent('PAYMENT_RECEIPTED', `Recorded fee payment of KES ${newPayment.amount.toLocaleString()} for ${newPayment.studentName} via ${newPayment.paymentMethod} (${newPayment.receiptNo})`, 'FINANCE');
     return newPayment;
   };
@@ -1383,6 +1727,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return s;
       })
     }));
+
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'payments', paymentId), cleanFirestoreData({ status: 'REVERSED', notes: `Reversed: ${reason}` }), { merge: true });
+    } catch (err) {
+      console.error("Error reversing payment in Firestore:", err);
+    }
 
     logAuditEvent('PAYMENT_REVERSED', `Reversed receipt ${targetPayment.receiptNo} of KES ${targetPayment.amount}. Reason: ${reason}`, 'FINANCE');
   };
@@ -1431,6 +1781,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     }));
 
+    for (const inv of newInvoices) {
+      try {
+        await setDoc(doc(db, 'tenants', tenant.id, 'invoices', inv.id), cleanFirestoreData(inv), { merge: true });
+      } catch {}
+    }
+
     logAuditEvent('BATCH_INVOICES_GENERATED', `Generated ${newInvoices.length} invoices for ${grade} for ${term} ${year}`, 'FINANCE');
     return newInvoices.length;
   };
@@ -1447,6 +1803,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [...(prev[tenant.id] || []).filter(s => !(s.dayOfWeek === newSlot.dayOfWeek && s.startTime === newSlot.startTime && s.grade === newSlot.grade && s.stream === newSlot.stream)), newSlot]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'timetable', newSlot.id), cleanFirestoreData(newSlot), { merge: true });
+    } catch (err) {
+      console.error("Error saving timetable slot to Firestore:", err);
+    }
     return newSlot;
   };
 
@@ -1456,6 +1817,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).filter(s => s.id !== slotId)
     }));
+    try {
+      await deleteDoc(doc(db, 'tenants', tenant.id, 'timetable', slotId));
+    } catch (err) {
+      console.error("Error deleting timetable slot from Firestore:", err);
+    }
   };
 
   const createAssignment = async (assignmentData: Omit<Assignment, 'id' | 'tenantId' | 'assignedDate'>): Promise<Assignment> => {
@@ -1470,6 +1836,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newAssignment, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'assignments', newAssignment.id), cleanFirestoreData(newAssignment), { merge: true });
+    } catch (err) {
+      console.error("Error creating assignment in Firestore:", err);
+    }
     logAuditEvent('ASSIGNMENT_CREATED', `Published homework "${newAssignment.title}" for ${newAssignment.grade} ${newAssignment.stream}`, 'ACADEMICS');
     return newAssignment;
   };
@@ -1486,6 +1857,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newIncident, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'discipline', newIncident.id), cleanFirestoreData(newIncident), { merge: true });
+    } catch (err) {
+      console.error("Error reporting discipline incident in Firestore:", err);
+    }
     logAuditEvent('DISCIPLINE_INCIDENT_REPORTED', `Reported ${newIncident.severity} incident for ${newIncident.studentName}`, 'SETTINGS');
     return newIncident;
   };
@@ -1496,6 +1872,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).map(d => d.id === incidentId ? { ...d, status: 'RESOLVED', actionTaken } : d)
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'discipline', incidentId), cleanFirestoreData({ status: 'RESOLVED', actionTaken }), { merge: true });
+    } catch (err) {
+      console.error("Error resolving discipline incident in Firestore:", err);
+    }
     logAuditEvent('DISCIPLINE_RESOLVED', `Marked incident ${incidentId} as resolved`, 'SETTINGS');
   };
 
@@ -1511,6 +1892,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newEvt, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'events', newEvt.id), cleanFirestoreData(newEvt), { merge: true });
+    } catch (err) {
+      console.error("Error creating event in Firestore:", err);
+    }
     return newEvt;
   };
 
@@ -1527,6 +1913,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newBroadcast, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'notifications', newBroadcast.id), cleanFirestoreData(newBroadcast), { merge: true });
+    } catch (err) {
+      console.error("Error sending notification broadcast to Firestore:", err);
+    }
     logAuditEvent('SMS_BROADCAST_SENT', `Dispatched SMS/Notification broadcast "${newBroadcast.title}" to ${newBroadcast.recipientCount} recipients`, 'SETTINGS');
     return newBroadcast;
   };
@@ -1544,6 +1935,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [...(prev[tenant.id] || []), newCourse]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'college_courses', newCourse.id), cleanFirestoreData(newCourse), { merge: true });
+    } catch (err) {
+      console.error("Error saving college course to Firestore:", err);
+    }
     logAuditEvent('COURSE_CREATED', `Added college course ${newCourse.code} - ${newCourse.title}`);
     return newCourse;
   };
@@ -1561,6 +1957,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [...(prev[tenant.id] || []), newDept]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'college_departments', newDept.id), cleanFirestoreData(newDept), { merge: true });
+    } catch (err) {
+      console.error("Error saving college department to Firestore:", err);
+    }
     return newDept;
   };
 
@@ -1581,6 +1982,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newStudent, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'college_students', newStudent.id), cleanFirestoreData(newStudent), { merge: true });
+    } catch (err) {
+      console.error("Error admitting college student to Firestore:", err);
+    }
     logAuditEvent('COLLEGE_STUDENT_ADMITTED', `Enrolled college student ${newStudent.fullName} (${newStudent.regNo}) into ${newStudent.courseName}`);
     return newStudent;
   };
@@ -1597,6 +2003,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newBook, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'library_books', newBook.id), cleanFirestoreData(newBook), { merge: true });
+    } catch (err) {
+      console.error("Error saving library book to Firestore:", err);
+    }
     return newBook;
   };
 
@@ -1611,6 +2022,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [...(prev[tenant.id] || []), newItem]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'college_fee_structures', newItem.id), cleanFirestoreData(newItem), { merge: true });
+    } catch (err) {
+      console.error("Error saving college fee structure to Firestore:", err);
+    }
     logAuditEvent('COLLEGE_FEE_STRUCTURE_ADDED', `Added college fee item: ${newItem.courseName} - ${newItem.level} (KES ${newItem.totalSemesterFee.toLocaleString()})`, 'FINANCE');
     return newItem;
   };
@@ -1646,6 +2062,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return s;
       })
     }));
+
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'college_invoices', newInvoice.id), cleanFirestoreData(newInvoice), { merge: true });
+    } catch (err) {
+      console.error("Error generating college invoice to Firestore:", err);
+    }
 
     logAuditEvent('COLLEGE_INVOICE_GENERATED', `Generated college invoice ${invoiceNo} for ${invoiceData.studentName} (KES ${invoiceData.totalAmount.toLocaleString()})`, 'FINANCE');
     return newInvoice;
@@ -1700,6 +2122,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
     }
 
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'college_payments', newPayment.id), cleanFirestoreData(newPayment), { merge: true });
+    } catch (err) {
+      console.error("Error recording college payment to Firestore:", err);
+    }
+
     logAuditEvent('COLLEGE_PAYMENT_RECORDED', `Recorded college fee payment ${receiptNo} of KES ${paymentData.amount.toLocaleString()} for ${paymentData.studentName}`, 'FINANCE');
     return newPayment;
   };
@@ -1717,6 +2145,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [...(prev[tenant.id] || []), newProgram]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_programs', newProgram.id), cleanFirestoreData(newProgram), { merge: true });
+    } catch (err) {
+      console.error("Error adding theology program to Firestore:", err);
+    }
     logAuditEvent('THEOLOGY_PROGRAM_CREATED', `Created theology program: ${newProgram.code} - ${newProgram.title} (${newProgram.level})`, 'ACADEMICS');
     return newProgram;
   };
@@ -1727,6 +2160,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).map(p => p.id === programId ? { ...p, ...updates } : p)
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_programs', programId), cleanFirestoreData(updates), { merge: true });
+    } catch (err) {
+      console.error("Error updating theology program in Firestore:", err);
+    }
     logAuditEvent('THEOLOGY_PROGRAM_UPDATED', `Updated theology program: ${programId}`, 'ACADEMICS');
   };
 
@@ -1754,6 +2192,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).map(p => p.id === studentData.programId ? { ...p, enrolledStudentsCount: p.enrolledStudentsCount + 1 } : p)
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_students', newStudent.id), cleanFirestoreData(newStudent), { merge: true });
+    } catch (err) {
+      console.error("Error admitting theology student to Firestore:", err);
+    }
     logAuditEvent('THEOLOGY_STUDENT_ADMITTED', `Admitted theology candidate ${newStudent.fullName} (${newStudent.regNo}) to ${newStudent.programTitle}`, 'ACADEMICS');
     return newStudent;
   };
@@ -1764,6 +2207,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: (prev[tenant.id] || []).map(s => s.id === studentId ? { ...s, ...updates } : s)
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_students', studentId), cleanFirestoreData(updates), { merge: true });
+    } catch (err) {
+      console.error("Error updating theology student in Firestore:", err);
+    }
     logAuditEvent('THEOLOGY_STUDENT_UPDATED', `Updated seminarian record for student ${studentId}`, 'ACADEMICS');
   };
 
@@ -1779,6 +2227,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newLog, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_practicum_logs', newLog.id), cleanFirestoreData(newLog), { merge: true });
+    } catch (err) {
+      console.error("Error saving ministry practicum log to Firestore:", err);
+    }
     logAuditEvent('PRACTICUM_LOG_RECORDED', `Recorded ${newLog.hoursLogged} ministry practicum hours for ${newLog.studentName}`, 'ACADEMICS');
     return newLog;
   };
@@ -1823,6 +2276,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
     }
 
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_practicum_logs', logId), cleanFirestoreData({
+        status,
+        feedbackSupervisor: feedback,
+        approvedByDeanAt: status === 'VERIFIED' ? new Date().toISOString() : undefined
+      }), { merge: true });
+    } catch (err) {
+      console.error("Error verifying practicum log in Firestore:", err);
+    }
+
     logAuditEvent('PRACTICUM_LOG_VERIFIED', `Dean verified ministry log ${logId} as ${status}`, 'ACADEMICS');
   };
 
@@ -1838,6 +2301,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newResource, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_library', newResource.id), cleanFirestoreData(newResource), { merge: true });
+    } catch (err) {
+      console.error("Error saving theology resource to Firestore:", err);
+    }
     logAuditEvent('THEOLOGY_RESOURCE_ADDED', `Added divinity & patristic resource: ${newResource.title}`, 'ACADEMICS');
     return newResource;
   };
@@ -1880,6 +2348,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return s;
       })
     }));
+
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_invoices', newInvoice.id), cleanFirestoreData(newInvoice), { merge: true });
+    } catch (err) {
+      console.error("Error generating theology invoice to Firestore:", err);
+    }
 
     logAuditEvent('THEOLOGY_INVOICE_GENERATED', `Generated seminary invoice ${invoiceNo} for ${invoiceData.studentName} (KES ${totalAmount.toLocaleString()})`, 'FINANCE');
     return newInvoice;
@@ -1935,6 +2409,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
     }
 
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'theology_payments', newPayment.id), cleanFirestoreData(newPayment), { merge: true });
+    } catch (err) {
+      console.error("Error recording theology payment to Firestore:", err);
+    }
+
     logAuditEvent('THEOLOGY_PAYMENT_RECORDED', `Recorded seminary payment ${receiptNo} for ${paymentData.studentName} (KES ${paymentData.amount.toLocaleString()}) [${paymentData.sponsorName || paymentData.sponsorshipType || paymentData.paymentMethod}]`, 'FINANCE');
     return newPayment;
   };
@@ -1970,6 +2450,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     }));
 
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'retail_sales', newSale.id), cleanFirestoreData(newSale), { merge: true });
+    } catch (err) {
+      console.error("Error recording retail sale to Firestore:", err);
+    }
+
     logAuditEvent('RETAIL_SALE_COMPLETED', `Completed ${newSale.saleType} POS sale (${newSale.receiptNumber}) for KES ${newSale.totalAmount.toLocaleString()} via ${newSale.paymentMethod}`, 'FINANCE');
     return newSale;
   };
@@ -1986,6 +2472,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newProduct, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'retail_products', newProduct.id), cleanFirestoreData(newProduct), { merge: true });
+    } catch (err) {
+      console.error("Error saving retail product to Firestore:", err);
+    }
     logAuditEvent('PRODUCT_ADDED', `Added inventory product ${newProduct.name} (${newProduct.sku})`);
     return newProduct;
   };
@@ -2002,6 +2493,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return p;
       })
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'retail_products', productId), cleanFirestoreData({ currentStock: newStock }), { merge: true });
+    } catch (err) {
+      console.error("Error updating product stock in Firestore:", err);
+    }
     logAuditEvent('STOCK_ADJUSTED', `Adjusted stock for product ${productId} to ${newStock}`);
   };
 
@@ -2018,6 +2514,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newSupplier, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'retail_suppliers', newSupplier.id), cleanFirestoreData(newSupplier), { merge: true });
+    } catch (err) {
+      console.error("Error saving retail supplier to Firestore:", err);
+    }
     return newSupplier;
   };
 
@@ -2035,6 +2536,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newCustomer, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'retail_customers', newCustomer.id), cleanFirestoreData(newCustomer), { merge: true });
+    } catch (err) {
+      console.error("Error saving retail customer to Firestore:", err);
+    }
     return newCustomer;
   };
 
@@ -2075,6 +2581,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return c;
       })
     }));
+
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'retail_invoices', newInvoice.id), cleanFirestoreData(newInvoice), { merge: true });
+    } catch (err) {
+      console.error("Error creating retail invoice in Firestore:", err);
+    }
 
     logAuditEvent('RETAIL_INVOICE_CREATED', `Created customer invoice ${invoiceNo} for ${invoiceData.customerName} (KES ${invoiceData.totalAmount.toLocaleString()})`, 'FINANCE');
     return newInvoice;
@@ -2128,6 +2640,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     }));
 
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'retail_customer_payments', newPayment.id), cleanFirestoreData(newPayment), { merge: true });
+    } catch (err) {
+      console.error("Error saving retail payment to Firestore:", err);
+    }
+
     logAuditEvent('RETAIL_DEBTOR_PAYMENT_RECORDED', `Recorded debtor settlement ${receiptNo} of KES ${paymentData.amount.toLocaleString()} from ${paymentData.customerName}`, 'FINANCE');
     return newPayment;
   };
@@ -2146,6 +2664,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newPatient, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'hospital_patients', newPatient.id), cleanFirestoreData(newPatient), { merge: true });
+    } catch (err) {
+      console.error("Error registering hospital patient to Firestore:", err);
+    }
     logAuditEvent('PATIENT_REGISTERED', `Registered patient ${newPatient.fullName} (${newPatient.patientNo})`);
     return newPatient;
   };
@@ -2163,6 +2686,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [newConsultation, ...(prev[tenant.id] || [])]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'medical_consultations', newConsultation.id), cleanFirestoreData(newConsultation), { merge: true });
+    } catch (err) {
+      console.error("Error recording medical consultation to Firestore:", err);
+    }
     return newConsultation;
   };
 
@@ -2198,6 +2726,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return p;
       })
     }));
+
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'hospital_invoices', newInvoice.id), cleanFirestoreData(newInvoice), { merge: true });
+    } catch (err) {
+      console.error("Error saving hospital invoice to Firestore:", err);
+    }
 
     logAuditEvent('HOSPITAL_INVOICE_CREATED', `Generated hospital billing invoice ${invoiceNo} for patient ${invoiceData.patientName} (KES ${total.toLocaleString()})`, 'FINANCE');
     return newInvoice;
@@ -2237,6 +2771,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     }));
 
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'hospital_payments', newPayment.id), cleanFirestoreData(newPayment), { merge: true });
+    } catch (err) {
+      console.error("Error recording hospital payment to Firestore:", err);
+    }
+
     logAuditEvent('HOSPITAL_PAYMENT_RECORDED', `Received medical payment ${receiptNo} of KES ${paymentData.amount.toLocaleString()} for patient ${paymentData.patientName} (${paymentData.paymentMethod})`, 'FINANCE');
     return newPayment;
   };
@@ -2252,6 +2792,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       [tenant.id]: [...(prev[tenant.id] || []), newTariff]
     }));
+    try {
+      await setDoc(doc(db, 'tenants', tenant.id, 'hospital_tariffs', newTariff.id), cleanFirestoreData(newTariff), { merge: true });
+    } catch (err) {
+      console.error("Error saving hospital tariff to Firestore:", err);
+    }
     logAuditEvent('HOSPITAL_TARIFF_ADDED', `Added clinical tariff ${newTariff.name} (${newTariff.category}) - KES ${(newTariff.cashPrice || newTariff.standardPrice).toLocaleString()}`);
     return newTariff;
   };
@@ -2311,6 +2856,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
+  const hasModulePermission = (moduleKey: ModulePermissionKey, op: PermissionOperation): boolean => {
+    if (!user) return false;
+    if (user.role === 'SUPER_ADMIN' || user.role === 'TENANT_ADMIN') return true;
+
+    // Check if staff has customPermissions override
+    const currentStaffList = tenant ? (staffMap[tenant.id] || []) : [];
+    const staffMember = currentStaffList.find(s => s.email.toLowerCase() === user.email.toLowerCase() || s.id === user.uid);
+    if (staffMember?.customPermissions && staffMember.customPermissions[moduleKey]) {
+      return staffMember.customPermissions[moduleKey].includes(op);
+    }
+
+    const defaultPerms = DEFAULT_ROLE_PERMISSIONS[user.role];
+    if (defaultPerms && defaultPerms[moduleKey]) {
+      return defaultPerms[moduleKey]!.includes(op);
+    }
+
+    return false;
+  };
+
   const syncAllDataToFirestore = useCallback(async (): Promise<{ success: boolean; count: number; error?: string }> => {
     setIsSyncingFirestore(true);
     try {
@@ -2318,104 +2882,104 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 1. Sync all tenants to Cloud Firestore
       for (const t of allTenants) {
-        await setDoc(doc(db, 'tenants', t.id), t, { merge: true });
+        await setDoc(doc(db, 'tenants', t.id), cleanFirestoreData(t), { merge: true });
         count++;
 
         // Students subcollection
         const tStudents = studentsMap[t.id] || [];
         for (const s of tStudents) {
-          await setDoc(doc(db, 'tenants', t.id, 'students', s.id), s, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'students', s.id), cleanFirestoreData(s), { merge: true });
           count++;
         }
 
         // Staff subcollection
         const tStaff = staffMap[t.id] || [];
         for (const st of tStaff) {
-          await setDoc(doc(db, 'tenants', t.id, 'staff', st.id), st, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'staff', st.id), cleanFirestoreData(st), { merge: true });
           count++;
         }
 
         // Classes subcollection
         const tClasses = classesMap[t.id] || [];
         for (const c of tClasses) {
-          await setDoc(doc(db, 'tenants', t.id, 'classes', c.id), c, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'classes', c.id), cleanFirestoreData(c), { merge: true });
           count++;
         }
 
         // Fee structure subcollection
         const tFees = feeStructureMap[t.id] || [];
         for (const f of tFees) {
-          await setDoc(doc(db, 'tenants', t.id, 'fee_structures', f.id), f, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'fee_structures', f.id), cleanFirestoreData(f), { merge: true });
           count++;
         }
 
         // Payments subcollection
         const tPayments = paymentsMap[t.id] || [];
         for (const p of tPayments) {
-          await setDoc(doc(db, 'tenants', t.id, 'payments', p.id), p, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'payments', p.id), cleanFirestoreData(p), { merge: true });
           count++;
         }
 
         // Invoices subcollection
         const tInvoices = invoicesMap[t.id] || [];
         for (const inv of tInvoices) {
-          await setDoc(doc(db, 'tenants', t.id, 'invoices', inv.id), inv, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'invoices', inv.id), cleanFirestoreData(inv), { merge: true });
           count++;
         }
 
         // Attendance subcollection
         const tAttendance = attendanceMap[t.id] || [];
         for (const att of tAttendance) {
-          await setDoc(doc(db, 'tenants', t.id, 'attendance', att.id), att, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'attendance', att.id), cleanFirestoreData(att), { merge: true });
           count++;
         }
 
         // Retail products
         const tProducts = retailProductsMap[t.id] || [];
         for (const prod of tProducts) {
-          await setDoc(doc(db, 'tenants', t.id, 'retail_products', prod.id), prod, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'retail_products', prod.id), cleanFirestoreData(prod), { merge: true });
           count++;
         }
 
         // Hospital patients
         const tPatients = hospitalPatientsMap[t.id] || [];
         for (const pat of tPatients) {
-          await setDoc(doc(db, 'tenants', t.id, 'hospital_patients', pat.id), pat, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'hospital_patients', pat.id), cleanFirestoreData(pat), { merge: true });
           count++;
         }
 
         // Theology programs
         const tTheologyProgs = theologyProgramsMap[t.id] || [];
         for (const prog of tTheologyProgs) {
-          await setDoc(doc(db, 'tenants', t.id, 'theology_programs', prog.id), prog, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'theology_programs', prog.id), cleanFirestoreData(prog), { merge: true });
           count++;
         }
 
         // Theology students
         const tTheologyStudents = theologyStudentsMap[t.id] || [];
         for (const tStud of tTheologyStudents) {
-          await setDoc(doc(db, 'tenants', t.id, 'theology_students', tStud.id), tStud, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'theology_students', tStud.id), cleanFirestoreData(tStud), { merge: true });
           count++;
         }
 
         // Theology practicum logs
         const tTheologyPracticum = theologyPracticumLogsMap[t.id] || [];
         for (const tPrac of tTheologyPracticum) {
-          await setDoc(doc(db, 'tenants', t.id, 'theology_practicum_logs', tPrac.id), tPrac, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'theology_practicum_logs', tPrac.id), cleanFirestoreData(tPrac), { merge: true });
           count++;
         }
 
         // Theology library resources
         const tTheologyLib = theologyLibraryMap[t.id] || [];
         for (const tLib of tTheologyLib) {
-          await setDoc(doc(db, 'tenants', t.id, 'theology_library', tLib.id), tLib, { merge: true });
+          await setDoc(doc(db, 'tenants', t.id, 'theology_library', tLib.id), cleanFirestoreData(tLib), { merge: true });
           count++;
         }
       }
 
       // 2. Sync all platform users
       for (const u of allUsers) {
-        await setDoc(doc(db, 'platform_users', u.uid), u, { merge: true });
+        await setDoc(doc(db, 'platform_users', u.uid), cleanFirestoreData(u), { merge: true });
         count++;
       }
 
@@ -2464,6 +3028,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         tenant,
+        currentTenant: tenant,
+        websiteConfig,
+        updateWebsiteConfig,
+        logAuditAction,
         isPlatformMode,
         loading,
         error,
@@ -2540,6 +3108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         promoteStudents,
         addStaff,
         updateStaff,
+        deleteStaff,
         addClassStream,
         updateClassStream,
         recordAssessment,
@@ -2586,6 +3155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         canAccessModule,
         hasRole,
         hasPermission,
+        hasModulePermission,
         isSyncingFirestore,
         lastFirestoreSyncTime,
         firebaseProjectId,

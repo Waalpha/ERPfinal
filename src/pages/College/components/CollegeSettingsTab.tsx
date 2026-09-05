@@ -15,7 +15,7 @@ import {
   RefreshCw,
   Coins
 } from 'lucide-react';
-import { LogoUploader } from '../../../components/LogoUploader';
+import { LogoUploader, FaviconUploader } from '../../../components/LogoUploader';
 import { Tenant } from '../../../types';
 
 interface CollegeSettingsTabProps {
@@ -52,6 +52,7 @@ export const CollegeSettingsTab: React.FC<CollegeSettingsTabProps> = ({ tenant }
         type: type as any,
         logoUrl,
         faviconUrl,
+        favicon: faviconUrl,
         motto,
         contactPhone: phone,
         contactEmail: email,
@@ -179,16 +180,14 @@ export const CollegeSettingsTab: React.FC<CollegeSettingsTabProps> = ({ tenant }
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Favicon URL
-                </label>
-                <input
-                  type="url"
-                  value={faviconUrl}
-                  onChange={(e) => setFaviconUrl(e.target.value)}
-                  placeholder="https://.../favicon.ico"
-                  className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none font-mono"
-                />
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                  <FaviconUploader
+                    currentFaviconUrl={faviconUrl}
+                    onFaviconChange={(url) => setFaviconUrl(url)}
+                    label="Browser Tab Favicon"
+                    sublabel="Upload 32x32px ICO or PNG icon for college portal tabs."
+                  />
+                </div>
               </div>
 
               <div>

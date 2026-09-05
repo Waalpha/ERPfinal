@@ -30,7 +30,8 @@ import {
   Library,
   BedDouble,
   Receipt,
-  Award
+  Award,
+  Globe
 } from 'lucide-react';
 import { navigateToPlatform, MAIN_DOMAIN_SUFFIX } from '../services/TenantResolver';
 import { getNavigationForTenant, normalizeTenantType, NavSection } from '../services/ModuleRegistry';
@@ -48,7 +49,8 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
     collegeStudents,
     collegeCourses,
     theologyStudents,
-    theologyPrograms
+    theologyPrograms,
+    logout
   } = useAuth();
 
   const tType = normalizeTenantType(tenant.type);
@@ -57,7 +59,7 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
   const [currentTab, setCurrentTab] = useState<string>(() => {
     if (tType === 'COLLEGE') return 'college-overview';
     if (tType === 'THEOLOGICAL') return 'theology-overview';
-    if (tType === 'BUSINESS') return 'retail-pos';
+    if (tType === 'BUSINESS') return 'commerce-retail';
     if (tType === 'HOSPITAL') return 'hospital-overview';
     return 'school-overview';
   });
@@ -65,6 +67,38 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [tenantSearchQuery, setTenantSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // 5-minute inactivity timer to logout and go to public website
+  React.useEffect(() => {
+    if (!user) return; // Only active when logged in
+
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      // 5 minutes = 5 * 60 * 1000 = 300000 ms
+      timeoutId = setTimeout(async () => {
+        try {
+          await logout();
+        } catch {}
+        setCurrentTab('public-website');
+      }, 5 * 60 * 1000);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    resetTimer(); // initialize timer
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [user, logout]);
 
   // Available users in this specific tenant (plus Super Admin)
   const tenantUsers = (allUsers || []).filter(
@@ -113,6 +147,31 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
         tab: 'school-students'
       }));
   }, [tenantSearchQuery, tType, theologyStudents, theologyPrograms, collegeStudents, collegeCourses, students]);
+
+  // Full-Screen Dedicated Views (Public Website and POS Terminal)
+  if (currentTab === 'public-website') {
+    return (
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
+        <TenantRouter
+          currentTab={currentTab}
+          onNavigateTab={setCurrentTab}
+          tenant={tenant}
+        />
+      </div>
+    );
+  }
+
+  if (currentTab === 'commerce-pos' || currentTab === 'retail-pos') {
+    return (
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-slate-950 font-sans">
+        <TenantRouter
+          currentTab={currentTab}
+          onNavigateTab={setCurrentTab}
+          tenant={tenant}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans antialiased text-slate-900 selection:bg-indigo-500 selection:text-white">
@@ -229,6 +288,16 @@ export const TenantShell: React.FC<TenantShellProps> = ({ tenant }) => {
                 <span>New Admission</span>
               </button>
             )}
+
+            {/* Live Public Website Link */}
+            <button
+              onClick={() => setCurrentTab('public-website')}
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold rounded-xl shadow-xs transition"
+              title="Open Live Public Website"
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">Live Website</span>
+            </button>
 
             {/* User Persona & Role Selector */}
             {import.meta.env.DEV && (

@@ -22,7 +22,8 @@ import {
   BedDouble,
   Receipt,
   Award,
-  UserCheck
+  UserCheck,
+  Globe
 } from 'lucide-react';
 
 export interface NavItem {
@@ -104,6 +105,9 @@ export function getNavigationForTenant(tenant: Tenant): NavSection[] {
         {
           title: 'ADMINISTRATION',
           items: [
+            { id: 'staff-directory', label: 'Staff Directory', icon: Users },
+            { id: 'tenant-website-cms', label: 'Website / CMS', icon: Globe },
+            { id: 'system-administration', label: 'System Administration', icon: Shield },
             { id: 'college-settings', label: 'College Settings', icon: Settings }
           ]
         }
@@ -120,7 +124,9 @@ export function getNavigationForTenant(tenant: Tenant): NavSection[] {
             { id: 'theology-practicum', label: 'Ministry Practicum Logs', icon: Sparkles },
             { id: 'theology-library', label: 'Theological Library', icon: Library },
             { id: 'theology-fees', label: 'Invoicing & Tithing', icon: Receipt },
-            { id: 'theology-staff', label: 'Faculty & Staff', icon: UserCheck },
+            { id: 'staff-directory', label: 'Faculty & Staff Directory', icon: Users },
+            { id: 'tenant-website-cms', label: 'Website / CMS', icon: Globe },
+            { id: 'system-administration', label: 'System Administration', icon: Shield },
             { id: 'theology-reports', label: 'Seminary Reports', icon: FileText },
             { id: 'theology-sms', label: 'Communication / SMS', icon: Bell },
             { id: 'theology-settings', label: 'Seminary Settings', icon: Settings }
@@ -131,13 +137,15 @@ export function getNavigationForTenant(tenant: Tenant): NavSection[] {
     case 'BUSINESS':
       return [
         {
-          title: 'COMMERCE & POS',
+          title: 'COMMERCE OPERATIONS',
           items: [
-            { id: 'retail-pos', label: 'POS Terminal / Sales', icon: ShoppingBag },
-            { id: 'retail-inventory', label: 'Stock & Inventory', icon: Layers },
-            { id: 'retail-suppliers', label: 'Suppliers & Purchases', icon: Building2 },
-            { id: 'retail-customers', label: 'B2B Invoices & Debtors', icon: Receipt },
-            { id: 'retail-reports', label: 'Sales Reports & Analytics', icon: FileText },
+            { id: 'commerce-retail', label: 'Retail', icon: ShoppingBag },
+            { id: 'commerce-wholesale', label: 'Wholesale', icon: Receipt },
+            { id: 'commerce-pos', label: 'POS Terminal', icon: CreditCard },
+            { id: 'commerce-inventory', label: 'Inventory', icon: Layers },
+            { id: 'staff-directory', label: 'Staff Directory', icon: Users },
+            { id: 'tenant-website-cms', label: 'Website / CMS', icon: Globe },
+            { id: 'system-administration', label: 'System Administration', icon: Shield },
             { id: 'retail-settings', label: 'Store Settings', icon: Settings }
           ]
         }
@@ -153,6 +161,9 @@ export function getNavigationForTenant(tenant: Tenant): NavSection[] {
             { id: 'hospital-consultations', label: 'Doctor Consultations', icon: UserCheck },
             { id: 'hospital-pharmacy', label: 'Pharmacy & Dispensing', icon: Layers },
             { id: 'hospital-billing', label: 'Billing & Invoices', icon: Receipt },
+            { id: 'staff-directory', label: 'Staff & Personnel', icon: Users },
+            { id: 'tenant-website-cms', label: 'Website / CMS', icon: Globe },
+            { id: 'system-administration', label: 'System Administration', icon: Shield },
             { id: 'hospital-settings', label: 'Hospital Settings', icon: Settings }
           ]
         }
@@ -178,11 +189,18 @@ export function getNavigationForTenant(tenant: Tenant): NavSection[] {
           items: [
             { id: 'school-fees', label: 'Fee Structure & Receipts', icon: CreditCard },
             { id: 'school-attendance', label: 'Attendance Tracking', icon: Calendar },
-            { id: 'school-staff', label: 'Teachers & Staff', icon: UserCheck },
+            { id: 'staff-directory', label: 'Staff Directory', icon: Users },
             { id: 'school-discipline', label: 'Discipline & Pastoral', icon: Shield },
             { id: 'school-calendar', label: 'Term Calendar & Events', icon: Calendar },
             { id: 'school-sms', label: 'Bulk SMS Broadcasts', icon: Bell },
-            { id: 'school-reports', label: 'CBC Report Card Generator', icon: FileText },
+            { id: 'school-reports', label: 'CBC Report Card Generator', icon: FileText }
+          ]
+        },
+        {
+          title: 'ADMINISTRATION',
+          items: [
+            { id: 'tenant-website-cms', label: 'Website / CMS', icon: Globe },
+            { id: 'system-administration', label: 'System Administration', icon: Shield },
             { id: 'school-settings', label: 'School Settings', icon: Settings }
           ]
         }

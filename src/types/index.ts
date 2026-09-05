@@ -3,7 +3,9 @@ export type UserRole =
   | 'TENANT_ADMIN' 
   | 'MANAGER' 
   | 'ACCOUNTANT' 
+  | 'SALES'
   | 'CASHIER' 
+  | 'HR'
   | 'TEACHER' 
   | 'STAFF' 
   | 'VIEWER';
@@ -39,15 +41,43 @@ export interface SubscriptionTierConfig {
   supportSLA: string;
 }
 
+export interface PublicWebsiteContent {
+  heroBadgeText: string;
+  heroHeadline: string;
+  heroSubheadline: string;
+  heroPrimaryCtaText: string;
+  heroSecondaryCtaText: string;
+  solutionsTitle: string;
+  solutionsSubtitle: string;
+  pricingTitle: string;
+  pricingSubtitle: string;
+  footerTagline: string;
+}
+
+export const DEFAULT_PUBLIC_WEBSITE_CONTENT: PublicWebsiteContent = {
+  heroBadgeText: 'DAVETECH 5.0 Enterprise Cloud Released — Multi-Tenant Architecture',
+  heroHeadline: 'One Powerful Platform. Unlimited Possibilities.',
+  heroSubheadline: 'Run your entire organization with DAVETECH Enterprise — a secure, intelligent and scalable cloud platform engineered for schools, colleges, universities, hospitals, clinics, retail shops, and growing enterprises.',
+  heroPrimaryCtaText: 'Book a Demo',
+  heroSecondaryCtaText: 'Explore Solutions',
+  solutionsTitle: 'Engineered for Every Institution & Enterprise',
+  solutionsSubtitle: 'Purpose-built tailored workflows designed specifically for academic excellence, healthcare operations, and commercial scale.',
+  pricingTitle: 'Transparent, Predictable Enterprise Pricing',
+  pricingSubtitle: 'Choose the ideal tier for your institution or business. Scale seamlessly as you grow.',
+  footerTagline: 'Empowering schools, colleges, universities, hospitals, and businesses with world-class cloud infrastructure.'
+};
+
 export interface PlatformSettings {
   name: string;
   tagline: string;
   logoUrl?: string;
+  faviconUrl?: string;
   supportEmail: string;
   supportPhone: string;
   mainDomain: string;
   mpesaSandboxEnabled?: boolean;
   strictIsolationEnforced?: boolean;
+  publicWebsiteContent?: PublicWebsiteContent;
 }
 
 export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
@@ -58,7 +88,8 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   supportPhone: '+254 700 000 000',
   mainDomain: 'davetech.co.ke',
   mpesaSandboxEnabled: true,
-  strictIsolationEnforced: true
+  strictIsolationEnforced: true,
+  publicWebsiteContent: DEFAULT_PUBLIC_WEBSITE_CONTENT
 };
 
 export const DEFAULT_SUBSCRIPTION_TIERS: SubscriptionTierConfig[] = [
@@ -163,6 +194,7 @@ export interface Tenant {
   primaryColor?: string;
   secondaryColor?: string;
   favicon?: string;
+  faviconUrl?: string;
   ownerUid?: string;
   stats?: {
     studentCount?: number;
@@ -292,12 +324,17 @@ export interface StaffMember {
   phone: string;
   role: UserRole;
   designation: string; // e.g., Headteacher, Deputy Head, Class Teacher, Subject Head, Bursar
+  department?: string; // e.g., Administration, Academics, Finance, Sales & POS, HR, ICT, Medical
   subjectsTaught: string[];
   assignedGrades: PrimaryGradeLevel[];
   employmentType: 'PERMANENT' | 'CONTRACT' | 'INTERN';
   idNumber: string;
   joinDate: string;
   status: 'ACTIVE' | 'ON_LEAVE' | 'INACTIVE';
+  assignedModules?: string[];
+  accountAccessEnabled?: boolean;
+  customPermissions?: Record<string, string[]>;
+  avatarUrl?: string;
 }
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
@@ -516,11 +553,253 @@ export interface AuditLog {
   tenantId: string;
   userId: string;
   userEmail: string;
-  action: string;
+  userName?: string;
+  action: string; // 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'ROLE_CHANGE' | 'PERMISSION_CHANGE' | 'SETTINGS_CHANGE' | string
+  module?: string; // 'STAFF' | 'FINANCE' | 'POS' | 'WEBSITE' | 'SETTINGS' | 'STUDENTS' | 'SYSTEM'
+  record?: string;
+  result?: 'SUCCESS' | 'FAILURE';
   details: string;
   category: 'AUTH' | 'ADMISSION' | 'FINANCE' | 'ACADEMICS' | 'SETTINGS' | 'SECURITY';
   timestamp: string;
   ipAddress?: string;
+}
+
+// MODULE SPECIFIC RBAC PERMISSIONS
+export type ModulePermissionKey = 
+  | 'pos'
+  | 'finance'
+  | 'staff'
+  | 'inventory'
+  | 'academics'
+  | 'students'
+  | 'patients'
+  | 'website'
+  | 'settings'
+  | 'reports'
+  | 'audit';
+
+export type PermissionOperation = 'view' | 'create' | 'edit' | 'delete' | 'manage';
+
+export type RolePermissionsMap = Record<ModulePermissionKey, PermissionOperation[]>;
+
+export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Partial<RolePermissionsMap>> = {
+  SUPER_ADMIN: {
+    pos: ['view', 'create', 'edit', 'delete', 'manage'],
+    finance: ['view', 'create', 'edit', 'delete', 'manage'],
+    staff: ['view', 'create', 'edit', 'delete', 'manage'],
+    inventory: ['view', 'create', 'edit', 'delete', 'manage'],
+    academics: ['view', 'create', 'edit', 'delete', 'manage'],
+    students: ['view', 'create', 'edit', 'delete', 'manage'],
+    patients: ['view', 'create', 'edit', 'delete', 'manage'],
+    website: ['view', 'create', 'edit', 'delete', 'manage'],
+    settings: ['view', 'create', 'edit', 'delete', 'manage'],
+    reports: ['view', 'create', 'edit', 'delete', 'manage'],
+    audit: ['view', 'create', 'edit', 'delete', 'manage']
+  },
+  TENANT_ADMIN: {
+    pos: ['view', 'create', 'edit', 'delete', 'manage'],
+    finance: ['view', 'create', 'edit', 'delete', 'manage'],
+    staff: ['view', 'create', 'edit', 'delete', 'manage'],
+    inventory: ['view', 'create', 'edit', 'delete', 'manage'],
+    academics: ['view', 'create', 'edit', 'delete', 'manage'],
+    students: ['view', 'create', 'edit', 'delete', 'manage'],
+    patients: ['view', 'create', 'edit', 'delete', 'manage'],
+    website: ['view', 'create', 'edit', 'delete', 'manage'],
+    settings: ['view', 'create', 'edit', 'delete', 'manage'],
+    reports: ['view', 'create', 'edit', 'delete', 'manage'],
+    audit: ['view', 'create', 'edit', 'delete', 'manage']
+  },
+  MANAGER: {
+    pos: ['view', 'create', 'edit', 'manage'],
+    finance: ['view', 'create', 'edit', 'manage'],
+    staff: ['view', 'create', 'edit'],
+    inventory: ['view', 'create', 'edit', 'manage'],
+    academics: ['view', 'create', 'edit', 'manage'],
+    students: ['view', 'create', 'edit'],
+    patients: ['view', 'create', 'edit', 'manage'],
+    website: ['view', 'create', 'edit'],
+    settings: ['view'],
+    reports: ['view', 'create', 'manage'],
+    audit: ['view']
+  },
+  ACCOUNTANT: {
+    pos: ['view'],
+    finance: ['view', 'create', 'edit', 'delete', 'manage'],
+    staff: ['view'],
+    inventory: ['view'],
+    academics: ['view'],
+    students: ['view'],
+    patients: ['view'],
+    website: ['view'],
+    settings: ['view'],
+    reports: ['view', 'create', 'manage'],
+    audit: ['view']
+  },
+  SALES: {
+    pos: ['view', 'create', 'edit'],
+    finance: ['view', 'create'],
+    staff: ['view'],
+    inventory: ['view', 'edit'],
+    academics: [],
+    students: ['view'],
+    patients: [],
+    website: ['view'],
+    settings: [],
+    reports: ['view'],
+    audit: []
+  },
+  CASHIER: {
+    pos: ['view', 'create'],
+    finance: ['view', 'create'],
+    staff: [],
+    inventory: ['view'],
+    academics: [],
+    students: ['view'],
+    patients: ['view'],
+    website: [],
+    settings: [],
+    reports: ['view'],
+    audit: []
+  },
+  HR: {
+    pos: [],
+    finance: ['view'],
+    staff: ['view', 'create', 'edit', 'delete', 'manage'],
+    inventory: [],
+    academics: [],
+    students: ['view'],
+    patients: [],
+    website: ['view'],
+    settings: ['view'],
+    reports: ['view'],
+    audit: ['view']
+  },
+  TEACHER: {
+    pos: [],
+    finance: [],
+    staff: ['view'],
+    inventory: ['view'],
+    academics: ['view', 'create', 'edit', 'manage'],
+    students: ['view', 'edit'],
+    patients: [],
+    website: ['view'],
+    settings: [],
+    reports: ['view', 'create'],
+    audit: []
+  },
+  STAFF: {
+    pos: ['view'],
+    finance: [],
+    staff: ['view'],
+    inventory: ['view'],
+    academics: ['view'],
+    students: ['view'],
+    patients: ['view'],
+    website: ['view'],
+    settings: [],
+    reports: ['view'],
+    audit: []
+  },
+  VIEWER: {
+    pos: ['view'],
+    finance: ['view'],
+    staff: ['view'],
+    inventory: ['view'],
+    academics: ['view'],
+    students: ['view'],
+    patients: ['view'],
+    website: ['view'],
+    settings: ['view'],
+    reports: ['view'],
+    audit: ['view']
+  }
+};
+
+// TENANT PUBLIC WEBSITE & CMS TYPES
+export interface TenantWebsiteSectionItem {
+  id: string;
+  title: string;
+  description: string;
+  icon?: string;
+  imageUrl?: string;
+  price?: string;
+  badge?: string;
+}
+
+export interface TenantWebsiteSection {
+  id: string;
+  type: 'hero' | 'about' | 'services' | 'products' | 'admissions' | 'stats' | 'testimonials' | 'cta' | 'contact' | 'custom';
+  title: string;
+  subtitle?: string;
+  content?: string;
+  imageUrl?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
+  isVisible: boolean;
+  order: number;
+  items?: TenantWebsiteSectionItem[];
+}
+
+export interface TenantWebsitePage {
+  id: string;
+  slug: string; // 'home' | 'about' | 'services' | 'contact'
+  title: string;
+  isPublished: boolean;
+  navOrder: number;
+  showInNav: boolean;
+  metaDescription?: string;
+  sections: TenantWebsiteSection[];
+}
+
+export interface TenantWebsiteConfig {
+  id?: string;
+  tenantId: string;
+  isPublished: boolean;
+  displayPlatformBranding: boolean; // default false: strictly NO Davetech branding
+  theme: {
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+    fontFamily: 'sans' | 'serif' | 'display';
+    heroLayout: 'centered' | 'split' | 'minimal';
+  };
+  navigation: {
+    logoUrl?: string;
+    brandName: string;
+    tagline?: string;
+    ctaButtonText?: string;
+    ctaButtonLink?: string;
+  };
+  contact: {
+    email: string;
+    phone: string;
+    address: string;
+    openingHours?: string;
+    socialLinks?: {
+      facebook?: string;
+      twitter?: string;
+      instagram?: string;
+      linkedin?: string;
+      whatsapp?: string;
+    };
+  };
+  pages: TenantWebsitePage[];
+  updatedAt: string;
+  publishedAt?: string;
+}
+
+export interface TenantWebsiteInquiry {
+  id: string;
+  tenantId: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  createdAt: string;
+  status: 'NEW' | 'READ' | 'RESPONDED';
 }
 
 // PERMISSION & SECURITY ROLES

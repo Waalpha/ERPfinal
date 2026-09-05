@@ -16,7 +16,7 @@ import {
   Check
 } from 'lucide-react';
 import { MAIN_DOMAIN } from '../../types';
-import { LogoUploader } from '../../components/LogoUploader';
+import { LogoUploader, FaviconUploader } from '../../components/LogoUploader';
 
 export const SchoolSettings: React.FC = () => {
   const { tenant, updateTenantSettings, subscriptionTiers } = useAuth();
@@ -24,6 +24,7 @@ export const SchoolSettings: React.FC = () => {
   const [name, setName] = useState(tenant?.name || '');
   const [motto, setMotto] = useState(tenant?.motto || '');
   const [logoUrl, setLogoUrl] = useState(tenant?.logoUrl || '');
+  const [favicon, setFavicon] = useState(tenant?.favicon || tenant?.faviconUrl || '');
   const [subdomain, setSubdomain] = useState(tenant?.subdomain || tenant?.code?.toLowerCase() || '');
   const [customDomain, setCustomDomain] = useState(tenant?.customDomain || '');
   const [publicWebsite, setPublicWebsite] = useState(tenant?.publicWebsite || '');
@@ -53,6 +54,8 @@ export const SchoolSettings: React.FC = () => {
       name,
       motto,
       logoUrl,
+      favicon,
+      faviconUrl: favicon,
       subdomain: cleanSubdomain,
       customDomain: customDomain.trim().toLowerCase() || undefined,
       publicWebsite: publicWebsite.trim() || undefined,
@@ -89,7 +92,7 @@ export const SchoolSettings: React.FC = () => {
       {/* Settings Form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6 text-xs">
         {/* Logo Crest Uploader Section */}
-        <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4">
+        <div className="space-y-4 bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4">
           <LogoUploader
             currentLogoUrl={logoUrl}
             onLogoChange={(url) => setLogoUrl(url)}
@@ -97,6 +100,14 @@ export const SchoolSettings: React.FC = () => {
             label="Official School Crest & Badge Logo"
             sublabel="Upload school emblem to brand report cards, fee receipts, portal header, and circulars."
           />
+          <div className="pt-3 border-t border-slate-200">
+            <FaviconUploader
+              currentFaviconUrl={favicon}
+              onFaviconChange={(url) => setFavicon(url)}
+              label="Browser Tab Favicon (School Tab Icon)"
+              sublabel="Upload 32x32px ICO or PNG icon shown in browser tabs when visiting this school portal."
+            />
+          </div>
         </div>
 
         <div className="border-b border-slate-100 pb-2">

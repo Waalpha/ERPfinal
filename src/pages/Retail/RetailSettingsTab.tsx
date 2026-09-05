@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Settings, Save, CheckCircle } from 'lucide-react';
-import { LogoUploader } from '../../components/LogoUploader';
+import { LogoUploader, FaviconUploader } from '../../components/LogoUploader';
 
 export const RetailSettingsTab: React.FC = () => {
   const { tenant, updateTenantSettings } = useAuth();
 
   const [name, setName] = useState(tenant?.name || '');
   const [logoUrl, setLogoUrl] = useState(tenant?.logoUrl || '');
+  const [favicon, setFavicon] = useState(tenant?.favicon || tenant?.faviconUrl || '');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,6 +18,8 @@ export const RetailSettingsTab: React.FC = () => {
     await updateTenantSettings(tenant.id, {
       name,
       logoUrl,
+      favicon,
+      faviconUrl: favicon,
     });
 
     setSaveSuccess(true);
@@ -44,6 +47,15 @@ export const RetailSettingsTab: React.FC = () => {
           entityName={name || 'Retail Store'}
           label="Store Logo"
         />
+
+        <div className="pt-2 border-t border-slate-100">
+          <FaviconUploader
+            currentFaviconUrl={favicon}
+            onFaviconChange={(url) => setFavicon(url)}
+            label="Store Browser Tab Favicon"
+            sublabel="Upload 32x32px ICO or PNG icon for retail store tabs."
+          />
+        </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">Store Name</label>

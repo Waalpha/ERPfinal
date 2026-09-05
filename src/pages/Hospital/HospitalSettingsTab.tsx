@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Settings, Save, CheckCircle } from 'lucide-react';
-import { LogoUploader } from '../../components/LogoUploader';
+import { LogoUploader, FaviconUploader } from '../../components/LogoUploader';
 
 export const HospitalSettingsTab: React.FC = () => {
   const { tenant, updateTenantSettings } = useAuth();
 
   const [name, setName] = useState(tenant?.name || '');
   const [logoUrl, setLogoUrl] = useState(tenant?.logoUrl || '');
+  const [favicon, setFavicon] = useState(tenant?.favicon || tenant?.faviconUrl || '');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,6 +18,8 @@ export const HospitalSettingsTab: React.FC = () => {
     await updateTenantSettings(tenant.id, {
       name,
       logoUrl,
+      favicon,
+      faviconUrl: favicon,
     });
 
     setSaveSuccess(true);
@@ -44,6 +47,15 @@ export const HospitalSettingsTab: React.FC = () => {
           entityName={name || 'Hospital'}
           label="Hospital Logo"
         />
+
+        <div className="pt-2 border-t border-slate-100">
+          <FaviconUploader
+            currentFaviconUrl={favicon}
+            onFaviconChange={(url) => setFavicon(url)}
+            label="Hospital Browser Tab Favicon"
+            sublabel="Upload 32x32px ICO or PNG icon for hospital portal tabs."
+          />
+        </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">Hospital Name</label>
