@@ -8,71 +8,40 @@ interface PricingSectionProps {
 }
 
 export const PricingSection: React.FC<PricingSectionProps> = ({ onOpenDemo }) => {
-  const { platformSettings } = useAuth();
+  const { platformSettings, subscriptionTiers } = useAuth();
   const content = platformSettings?.publicWebsiteContent || DEFAULT_PUBLIC_WEBSITE_CONTENT;
   const [isAnnual, setIsAnnual] = useState(true);
 
-  const plans = [
-    {
-      name: 'STARTER',
-      tagline: 'Ideal for growing schools, single clinics, and small retail shops.',
-      monthlyPrice: 'KES 15,000',
-      annualPrice: 'KES 12,500',
-      period: 'per month',
-      badge: 'Quick Start',
+  // Map system subscription tiers to marketing card display format
+  const plans = subscriptionTiers.map((tier) => {
+    const isPopular = tier.isPopular;
+    const isEnterprise = tier.id === 'ENTERPRISE';
+
+    return {
+      name: tier.name,
+      id: tier.id,
+      tagline: tier.tagline,
+      monthlyPrice: `${tier.currency} ${tier.priceMonthly.toLocaleString()}`,
+      annualPrice: `${tier.currency} ${tier.priceAnnual.toLocaleString()}`,
+      period: isEnterprise ? 'tailored pricing' : 'per month',
+      badge: isPopular ? 'Most Popular' : isEnterprise ? 'Maximum Power' : 'Quick Start',
       features: [
-        'Up to 300 Active Students / Users',
-        'Standard Student & Staff Management',
-        'Basic Fee Invoicing & Receipts',
-        'Point of Sale (POS) Module',
-        'Email & SMS Notifications',
-        'Standard Cloud Backup',
-        'Community Support'
+        tier.maxLearnersOrRecords,
+        tier.maxStaffAccounts,
+        `${tier.maxStorageGB} GB Cloud Storage`,
+        tier.supportSLA,
+        ...tier.features
       ],
-      color: 'border-slate-200 bg-white text-slate-900 shadow-sm',
-      buttonBg: 'bg-slate-900 hover:bg-slate-800 text-white'
-    },
-    {
-      name: 'PROFESSIONAL',
-      tagline: 'Built for established schools, colleges, medium clinics, and businesses.',
-      monthlyPrice: 'KES 45,000',
-      annualPrice: 'KES 38,000',
-      period: 'per month',
-      badge: 'Most Popular',
-      features: [
-        'Up to 2,000 Active Users / Students',
-        'Advanced CBC Gradebook & Report Cards',
-        'M-Pesa STK Push & Automated Bank Sync',
-        'Full Inventory & Multi-Branch POS',
-        'HR, Payroll & Statutory Tax Calculations',
-        'LMS & Student Portals',
-        'Dedicated Priority Support',
-        'Custom Subdomain Workspace'
-      ],
-      color: 'border-indigo-600 bg-slate-900 text-white shadow-xl relative ring-2 ring-indigo-500/30',
-      buttonBg: 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-600/30'
-    },
-    {
-      name: 'ENTERPRISE',
-      tagline: 'For large universities, multi-specialty hospitals, and multi-branch chains.',
-      monthlyPrice: 'Custom',
-      annualPrice: 'Custom',
-      period: 'tailored pricing',
-      badge: 'Maximum Power',
-      features: [
-        'Unlimited Students, Patients & Staff',
-        'Full Access to All 50+ Enterprise Modules',
-        'Custom Domain Mapping (erp.yourorg.ac.ke)',
-        'Dedicated VPC Cloud Container & DB',
-        'Advanced Analytics & BI Reports',
-        'Complete API & Webhook Access',
-        '24/7 Dedicated Account Manager',
-        'SLA 99.99% Uptime Guarantee'
-      ],
-      color: 'border-slate-200 bg-white text-slate-900 shadow-sm',
-      buttonBg: 'bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300'
-    }
-  ];
+      color: isPopular
+        ? 'border-indigo-600 bg-slate-900 text-white shadow-xl relative ring-2 ring-indigo-500/30'
+        : 'border-slate-200 bg-white text-slate-900 shadow-sm',
+      buttonBg: isPopular
+        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-600/30'
+        : isEnterprise
+        ? 'bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300'
+        : 'bg-slate-900 hover:bg-slate-800 text-white'
+    };
+  });
 
   return (
     <section id="pricing" className="py-24 bg-white">
